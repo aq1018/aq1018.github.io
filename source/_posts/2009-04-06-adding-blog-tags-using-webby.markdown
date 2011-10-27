@@ -22,7 +22,8 @@ Let's bust it out! Here is my plan:
 
  This is easy, just open up a post and add a `tags` attribute to the meta data:
 
-{% codeblock [example post.txt] lang:yaml %}
+
+{% codeblock example post.txt lang:yaml %}
 title         :   Adding Blog Tags using Webby
 created_at    :   2009-04-06 19:12:00.343030 +08:00
 blog_post     :   true
@@ -38,7 +39,9 @@ tags:
 
 ##Make tags helper
 
-All I need to do is to make a tags helper module that does the counting for me, and register it with Webby. Here is the code:
+All I need to do is to make a tags helper module that does the counting for me,
+and register it with Webby. Here is the code:
+
 
 {% codeblock lib/tags_helper.rb %}
 module TagsHelper
@@ -76,12 +79,19 @@ end
 Webby::Helpers.register(TagsHelper)
 {% endcodeblock %}
 
-`posts` is a handy little short cut for getting all blog posts, much shorter to type. You can also pass in the `limit`, and `find_options` to customize your find. Example:
 
-{% codeblock find the first 10 posts. lang:ruby %}
-# finding first 10 posts in blogs dir, and sorted in descending chronological order
-posts(10, :in_directory => 'blogs', :sort_by => "created_at", :reverse => true)
+`posts` is a handy little short cut for getting all blog posts,
+much shorter to type. You can also pass in the `limit`,
+and `find_options` to customize your find. Example:
+
+
+{% codeblock finding first 10 posts in blogs dir, and sorted in descending chronological order. lang:ruby %}
+posts 10,
+      :in_directory => 'blogs',
+      :sort_by      => 'created_at',
+      :reverse      => true
 {% endcodeblock %}
+
 
 `tags_hash` returns a hash with tag name and occurance as the key and value.
 
@@ -91,20 +101,26 @@ posts(10, :in_directory => 'blogs', :sort_by => "created_at", :reverse => true)
 
 Now that we have the helper, we can make a partial that displays the tags. I made it in HAML:
 
+
 {% codeblock _partials/_tags.haml %}
 %ul
-  / sort tags in alphabetical order, and then generate links for each tag
+  / sort tags in alphabetical order,
+  / and then generate links for each tag
   -tags_hash.keys.sort.each do |tag|
     %li
       %a{:href=>"/tags/#{tag}"}= tag
       ==(#{tags_hash[tag]})
 {% endcodeblock %}
 
-You can see the partial in effect on the lower right side of the page in footer. This is basic and nothing fancy...
+
+You can see the partial in effect on the lower right side of the page in footer.
+This is basic and nothing fancy...
 
 ##Make a Rake Task
 
-Now the tags are in place, we want actually display the tags pages. We make a new rake task to generate all the tags page for us.
+Now the tags are in place, we want actually display the tags pages.
+We make a new rake task to generate all the tags page for us.
+
 
 {% codeblock tags.rake lang:ruby %}
 require 'lib/tags.rb'
@@ -116,8 +132,12 @@ namespace :tags do
     tags_hash.keys.each do |tag|
       dir = Webby.site.tags_dir
       page = File.join(dir, File.basename(tag))
-      page = Webby::Builder.create(page, :from => "#{Webby.site.template_dir}/tags/generate.erb",
-                 :locals => {:tag => tag, :directory => dir})
+      page =
+        Webby::Builder.create(
+          page,
+          :from => "#{Webby.site.template_dir}/tags/generate.erb",
+          :locals => {:tag => tag, :directory => dir}
+        )
     end
   end
 
@@ -131,4 +151,6 @@ namespace :tags do
 end
 {% endcodeblock %}
 
-You will also need the corresponding `templates/tags/generate.erb`, which you can find in [my github account](http://github.com/aq1018/aaron-blog/)
+
+You will also need the corresponding `templates/tags/generate.erb`,
+which you can find in [my github account](http://github.com/aq1018/aaron-blog/)
