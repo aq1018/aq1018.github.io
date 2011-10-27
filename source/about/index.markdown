@@ -30,7 +30,7 @@ and Clean API together in ruby. I know, there are a couple Reactor Patterns
 such as EventMachine in ruby already. However, they all lack certain aspects as I
 mentioned earlier, and I hope to fill the gap by providing something different.
 
-## Nighttime Philosopher
+## Midnight Philosopher
 
 My personal life is geeky to the core. I would ponder about the depth of the universe,
 debate about our economic policies, and make arguments on the impact of government
@@ -48,4 +48,4 @@ sight. It is not the time to sit idly watching NFL with a beer in hand and prete
 everything is OK or believing the society will bail you out. It is not in line with my belief
 of individual responsibility. One thing I am clear, no one will save me but me.
 
-To me, this is survival. :)
+To me, this is survival.
