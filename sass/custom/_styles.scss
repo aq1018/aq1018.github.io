@@ -1,2 +1,25 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
+
+.about {
+  h1 {
+       -moz-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+         -o-box-shadow: none !important;
+            box-shadow: none !important;
+    border-bottom: 0px none !important;
+  }
+  a {
+    text-decoration: none;
+    white-space: normal !important;
+    line-height: 32px;
+    display: block;
+    text-align: center;
+
+    img {
+      display: block;
+      margin: 0 auto;
+      border: 0 none;
+    }
+  }
+}
