@@ -38,7 +38,7 @@
   <header role="banner"><hgroup>
   <h1><a href="/">AQ</a></h1>
   
-    <h2>{ :ruby => :awesome , :javascript => :kickass }</h2>
+    <h2>{ ruby: 'awesome', javascript: 'kickass' }</h2>
   
 </hgroup>
 
@@ -379,13 +379,21 @@ which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github a
 
 <aside class="sidebar">
   
-    <section>
-  <h1>About Me</h1>
-  <a href="/about">Daytime hacker, midnight philosopher</a>
+    <section class="about">
+  <h1>
+    <a href="/about">
+      <img src="http://www.gravatar.com/avatar/d2d5c5e3d38f94fb0dcdd78749064479?s=140" alt="Gravatar of Aaron Qian " title="Gravatar of Aaron Qian" />
+      <p>Me</p>
+    </a>
+  </h1>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/">Dm-is-slug 0.10.2 Now on GemCutter</a>
@@ -403,29 +411,8 @@ which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github a
         <a href="/blog/2009/04/12/javascript-bdd-test-frameworks-compared/">Javascript BDD Test Frameworks Compared</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2009/04/07/redcloth-ate-my-notextile/">Redcloth Ate My Notextile Tag</a>
-      </li>
-    
   </ul>
 </section>
-
-<section>
-  <h1>Latest Tweets</h1>
-  <ul id="tweets">
-    <li class="loading">Status updating...</li>
-  </ul>
-  <script type="text/javascript">
-    $.domReady(function(){
-      getTwitterFeed("aq1018", 4, false);
-    });
-  </script>
-  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
-  
-    <a href="http://twitter.com/aq1018" class="twitter-follow-button" data-width="208px" data-show-count="false">Follow @aq1018</a>
-  
-</section>
-
 
 <section>
   <h1>GitHub Repos</h1>
@@ -447,14 +434,25 @@ which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github a
 
         github.showRepos({
             user: 'aq1018',
-            count: 0,
-            skip_forks: true,
+            count: 10,
+            skip_forks: false,
             target: '#gh_repos'
         });
     });
   </script>
   <script src="/javascripts/github.js" type="text/javascript"> </script>
 </section>
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/aq1018?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
 
 
   

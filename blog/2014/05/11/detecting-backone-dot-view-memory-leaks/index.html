@@ -5,13 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Updates on Inspec - Javascript BDD Framework - AQ</title>
+  <title>Detecting Backone.View Memory Leaks - AQ</title>
   <meta name="author" content="Aaron Qian">
 
   
-  <meta name="description" content="Update: Due to lack of interest and time, Inspec is no longer maintained.
-jSpec has become more complete since this post,
-and I would recommend using &hellip;">
+  <meta name="description" content="Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -20,7 +19,7 @@ and I would recommend using &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://aq1018.github.com/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework">
+  <link rel="canonical" href="http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="AQ" type="application/atom+xml">
@@ -71,7 +70,7 @@ and I would recommend using &hellip;">
   
   <header>
     
-      <h1 class="entry-title">Updates on Inspec - Javascript BDD Framework</h1>
+      <h1 class="entry-title">Detecting Backone.View Memory Leaks</h1>
     
     
       <p class="meta">
@@ -87,74 +86,175 @@ and I would recommend using &hellip;">
   
 
 
-<time datetime="2009-04-24T22:37:00-07:00" pubdate data-updated="true">Apr 24<span>th</span>, 2009</time>
+<time datetime="2014-05-11T22:09:38-07:00" pubdate data-updated="true">May 11<span>th</span>, 2014</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p><em>Update: Due to lack of interest and time, Inspec is no longer maintained.
-<a href="http://visionmedia.github.com/jspec/">jSpec</a> has become more complete since this post,
-and I would recommend using <a href="http://visionmedia.github.com/jspec/">jSpec</a> instead.</em></p>
+<div class="entry-content"><p>Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your views
+by calling <code>view.remove()</code>? Are you sure didn&rsquo;t even miss one of them?</p>
 
-<p>For the past two weeks, a lot of improvements has been done for
-<a href="http://github.com/aq1018/inspec">Inspec</a>, here is the list:</p>
+<p>No worries, I&rsquo;ve got your back. : )</p>
 
-<ul>
-<li>Better scoping / sandboxing</li>
-<li>Support for <a href="http://www.mozilla.org/rhino/">Rhino</a>, <a href="http://www.mozilla.org/js/spidermonkey/">SpiderMonkey</a>, <a href="http://ajaxian.com/archives/johnson-wrapping-javascript-in-a-loving-ruby-embrace-and-arax">Johnson</a> and <a href="http://en.wikipedia.org/wiki/Windows_Script_Host">WSCript</a></li>
-<li>Tested to work with IE7, Firefox 3, Chrome and Safari 3</li>
-<li>Added a lot more specs to test <a href="http://github.com/aq1018/inspec">Inspec</a></li>
-<li>Fixed a bug where cascading before / after blocks not getting the correct scoping / sandboxing</li>
-<li>Changed BDD syntax a bit to be compatible with <a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a></li>
-<li>Shamelessly stole all matchers from <a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a></li>
-<li>Added the following matchers:
+<p>Just include <code>leaky-registry.js</code> before you load and initialize your Backbone app. It
+will monitor the life cycle of every <code>Backbone.View</code> and report any possible
+leaky views periodically to your browser console screen.</p>
 
-<ul>
-<li><code>beA</code>  &ndash; instanceof test</li>
-<li><code>throwError</code> &ndash; takes an function, and see if it throws an error</li>
-<li><code>respondTo</code> &ndash; test if an object has a function</li>
-<li><code>have</code> &ndash; see if an object or array contains something</li>
-</ul>
-</li>
-</ul>
+<div><script src='https://gist.github.com/bca960d6124a76db63d0.js?file=leaky-registry.js'></script>
+<noscript><pre><code>/*globals $*/
+
+var _ = require(&#39;underscore&#39;);
+
+function LeakyRegistry(options) {
+  this.initialize(options);
+}
+
+LeakyRegistry.DEFAULT_OPTIONS = {
+  interval: 5000,
+  gc: false
+};
+
+_.extend(LeakyRegistry.prototype, {
+
+  constructor: LeakyRegistry,
+
+  initialize: function(options) {
+    _.extend(this, this.sanitizeOptions(options));
+    this.interval = 5000;
+    this.clear();
+    console.warn(&#39;**** LeakyRegistery - Your best pal for backbone view memory leak detection. ****&#39;);
+  },
+
+  sanitizeOptions: function(options) {
+    var defaultOptions = LeakyRegistry.DEFAULT_OPTIONS;
+    options = _.pick(options || {}, &#39;interval&#39;, &#39;gc&#39;);
+    return _.extend({}, defaultOptions, options);
+  },
+
+  start: function() {
+    this._handle = setInterval(this.reportLeaks.bind(this), this.interval);
+  },
+
+  get: function(cid) {
+    return this.views[cid];
+  },
+
+  register: function(view) {
+    if (this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is already registerd!&#39;);
+      return;
+    }
+
+    this.views[view.cid] = view;
+  },
+
+  unregister: function(view) {
+    if (!this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is not registerd!&#39;);
+      return;
+    }
+
+    delete this.views[view.cid];
+  },
+
+  reportLeaks: function() {
+    console.log(&#39;checking leaky views&#39;);
+    _.each(this.views, function(view) {
+      view.__warnIfLeaky();
+    });
+
+    if (this.gc) {
+      this.gc();
+    }
+  },
+
+  clear: function() {
+    this.views = {};
+  },
+
+  stop: function() {
+    clearInterval(this._handle);
+  },
+
+  gc: function() {
+    _.each(this.views, function(view) {
+      if (view.__isLeaky()) {
+        view.remove();
+      }
+    });
+  },
+
+  dispose: function() {
+    this.stop();
+    this.clear();
+  }
+});
+
+var leakyRegistry = global.leakyRegistry = window.leakyRegistry = new LeakyRegistry();
 
 
-<p>I&rsquo;m working on some <strong>advanced features</strong> that requires some pretty big structural
-changes right now. They are:</p>
+var Backbone = require(&#39;backbone&#39;);
 
-<ul>
-<li>Support for multiple definition of same behaviors.</li>
-<li>Support for multiple definition of before / after blocks.</li>
-<li>Redo shared example groups ( Allows for sharing local scope variables inside shared example groups)</li>
-</ul>
+function intercept(fn, after) {
+  return function() {
+    var val = fn.apply(this, arguments);
+    after.apply(this);
+    return val;
+  };
+}
+
+// instrument Backbone.View#_configure
+// since we cannot override the constructor itself
+// the #_configure method invoked by the constructor is our next best choice
+Backbone.View.prototype._configure = intercept(Backbone.View.prototype._configure, function() {
+  leakyRegistry.register(this);
+});
+
+Backbone.View.prototype.remove = intercept(Backbone.View.prototype.remove, function() {
+  this.__gced = true;
+  console.trace(&#39;[&#39; + this.cid + &#39;] removed.&#39;, this);
+  leakyRegistry.unregister(this);
+});
+
+Backbone.View.prototype.__warnIfLeaky = function() {
+  if (this.__isLeaky()) {
+    console.warn(&#39;[&#39; + this.cid + &#39;] is leaky.&#39;, this.el, this);
+  }
+
+  if(this.__isOnScreen()) {
+    console.debug(&#39;[&#39; + this.cid + &#39;] still on screen.&#39;, this.el, this);
+  }
+};
+
+Backbone.View.prototype.__isOnScreen = function() {
+  return $.contains(document, this.el);
+};
+
+Backbone.View.prototype.__isLeaky = function() {
+  // gc&#39;ed already
+  if(this.__gced) {
+    return false;
+  }
+
+  // not gc&#39;ed, but still attached to dom
+  if (this.__isOnScreen()) {
+    return false;
+  }
+
+  // not gc&#39;ed and not on dom
+  // we think this might be a leaky view
+  return true;
+};
+
+leakyRegistry.start();
+
+</code></pre></noscript></div>
 
 
-<p>I plan to finish this feature while I&rsquo;m taking a business trip to Boston this coming Sunday.</p>
-
-<p>For future, the plan follows:</p>
-
-<ul>
-<li>Spec, spec spec, 100% coverage require!</li>
-<li>Extract and improve rendering logic from HTMLReporter to HTMLReporter.FlatFormatter</li>
-<li>Implement <code>HTMLReporter.NestedFormater</code></li>
-<li>Implement <code>HTMLReporter.CompactFormater</code></li>
-<li>Implement <code>ConsoleReporter.FlatFormatter</code></li>
-<li>Implement <code>ConsoleReporter.NestedFormater</code></li>
-<li>Implement <code>ConsoleReporter.CompactFormater</code></li>
-<li>Implement options for choose formatters, need to consider extending</li>
-<li>Add statistics functionality to Reporter Class</li>
-<li>Test on different browsers</li>
-<li>Selective Behavior Execution support</li>
-<li>Prioritize object printing with <code>toString()</code> if object has customized toString</li>
-<li>Documentation</li>
-<li>Make a wiki</li>
-</ul>
-
-
-<p>That&rsquo;s a lot of stuff to complete!
-If anyone interested please <a href="http://github.com/aq1018/inspec">fork Inspec</a></p>
+<p>Look Ma, No leaks!</p>
 </div>
 
 
@@ -177,15 +277,21 @@ If anyone interested please <a href="http://github.com/aq1018/inspec">fork Inspe
   
 
 
-<time datetime="2009-04-24T22:37:00-07:00" pubdate data-updated="true">Apr 24<span>th</span>, 2009</time>
+<time datetime="2014-05-11T22:09:38-07:00" pubdate data-updated="true">May 11<span>th</span>, 2014</time>
       
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/backbone/'>backbone</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>
+  
+</span>
 
 
     </p>
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://aq1018.github.com/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/" data-via="aq1018" data-counturl="http://aq1018.github.com/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/" data-via="aq1018" data-counturl="http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/" >Tweet</a>
   
   
   
@@ -194,10 +300,8 @@ If anyone interested please <a href="http://github.com/aq1018/inspec">fork Inspe
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/" title="Previous Post: Inspec - Yet Another Javascript BDD Test Framework">&laquo; Inspec - Yet Another Javascript BDD Test Framework</a>
+        <a class="basic-alignment left" href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/" title="Previous Post: dm-is-slug 0.10.2 Now on GemCutter">&laquo; dm-is-slug 0.10.2 Now on GemCutter</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/" title="Next Post: dm-is-slug 0.10.2 Now on GemCutter">dm-is-slug 0.10.2 Now on GemCutter &raquo;</a>
       
     </p>
   </footer>
@@ -308,8 +412,8 @@ If anyone interested please <a href="http://github.com/aq1018/inspec">fork Inspe
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://aq1018.github.com/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/';
-        var disqus_url = 'http://aq1018.github.com/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/';
+        var disqus_identifier = 'http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/';
+        var disqus_url = 'http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/';
         var disqus_script = 'embed.js';
       
     (function () {

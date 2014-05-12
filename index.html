@@ -9,10 +9,8 @@
   <meta name="author" content="Aaron Qian">
 
   
-  <meta name="description" content="I created a datamapper plugin called
-dm-is-slug in 2009 to
-ease the pain of handling permalinks or url slugs in my
-merb. So, I spent some time &hellip;">
+  <meta name="description" content="Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -41,7 +39,7 @@ merb. So, I spent some time &hellip;">
   <header role="banner"><hgroup>
   <h1><a href="/">AQ</a></h1>
   
-    <h2>{ :ruby => :awesome , :javascript => :kickass }</h2>
+    <h2>{ ruby: 'awesome', javascript: 'kickass' }</h2>
   
 </hgroup>
 
@@ -69,6 +67,203 @@ merb. So, I spent some time &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-11T22:09:38-07:00" pubdate data-updated="true">May 11<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your views
+by calling <code>view.remove()</code>? Are you sure didn&rsquo;t even miss one of them?</p>
+
+<p>No worries, I&rsquo;ve got your back. : )</p>
+
+<p>Just include <code>leaky-registry.js</code> before you load and initialize your Backbone app. It
+will monitor the life cycle of every <code>Backbone.View</code> and report any possible
+leaky views periodically to your browser console screen.</p>
+
+<div><script src='https://gist.github.com/bca960d6124a76db63d0.js?file=leaky-registry.js'></script>
+<noscript><pre><code>/*globals $*/
+
+var _ = require(&#39;underscore&#39;);
+
+function LeakyRegistry(options) {
+  this.initialize(options);
+}
+
+LeakyRegistry.DEFAULT_OPTIONS = {
+  interval: 5000,
+  gc: false
+};
+
+_.extend(LeakyRegistry.prototype, {
+
+  constructor: LeakyRegistry,
+
+  initialize: function(options) {
+    _.extend(this, this.sanitizeOptions(options));
+    this.interval = 5000;
+    this.clear();
+    console.warn(&#39;**** LeakyRegistery - Your best pal for backbone view memory leak detection. ****&#39;);
+  },
+
+  sanitizeOptions: function(options) {
+    var defaultOptions = LeakyRegistry.DEFAULT_OPTIONS;
+    options = _.pick(options || {}, &#39;interval&#39;, &#39;gc&#39;);
+    return _.extend({}, defaultOptions, options);
+  },
+
+  start: function() {
+    this._handle = setInterval(this.reportLeaks.bind(this), this.interval);
+  },
+
+  get: function(cid) {
+    return this.views[cid];
+  },
+
+  register: function(view) {
+    if (this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is already registerd!&#39;);
+      return;
+    }
+
+    this.views[view.cid] = view;
+  },
+
+  unregister: function(view) {
+    if (!this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is not registerd!&#39;);
+      return;
+    }
+
+    delete this.views[view.cid];
+  },
+
+  reportLeaks: function() {
+    console.log(&#39;checking leaky views&#39;);
+    _.each(this.views, function(view) {
+      view.__warnIfLeaky();
+    });
+
+    if (this.gc) {
+      this.gc();
+    }
+  },
+
+  clear: function() {
+    this.views = {};
+  },
+
+  stop: function() {
+    clearInterval(this._handle);
+  },
+
+  gc: function() {
+    _.each(this.views, function(view) {
+      if (view.__isLeaky()) {
+        view.remove();
+      }
+    });
+  },
+
+  dispose: function() {
+    this.stop();
+    this.clear();
+  }
+});
+
+var leakyRegistry = global.leakyRegistry = window.leakyRegistry = new LeakyRegistry();
+
+
+var Backbone = require(&#39;backbone&#39;);
+
+function intercept(fn, after) {
+  return function() {
+    var val = fn.apply(this, arguments);
+    after.apply(this);
+    return val;
+  };
+}
+
+// instrument Backbone.View#_configure
+// since we cannot override the constructor itself
+// the #_configure method invoked by the constructor is our next best choice
+Backbone.View.prototype._configure = intercept(Backbone.View.prototype._configure, function() {
+  leakyRegistry.register(this);
+});
+
+Backbone.View.prototype.remove = intercept(Backbone.View.prototype.remove, function() {
+  this.__gced = true;
+  console.trace(&#39;[&#39; + this.cid + &#39;] removed.&#39;, this);
+  leakyRegistry.unregister(this);
+});
+
+Backbone.View.prototype.__warnIfLeaky = function() {
+  if (this.__isLeaky()) {
+    console.warn(&#39;[&#39; + this.cid + &#39;] is leaky.&#39;, this.el, this);
+  }
+
+  if(this.__isOnScreen()) {
+    console.debug(&#39;[&#39; + this.cid + &#39;] still on screen.&#39;, this.el, this);
+  }
+};
+
+Backbone.View.prototype.__isOnScreen = function() {
+  return $.contains(document, this.el);
+};
+
+Backbone.View.prototype.__isLeaky = function() {
+  // gc&#39;ed already
+  if(this.__gced) {
+    return false;
+  }
+
+  // not gc&#39;ed, but still attached to dom
+  if (this.__isOnScreen()) {
+    return false;
+  }
+
+  // not gc&#39;ed and not on dom
+  // we think this might be a leaky view
+  return true;
+};
+
+leakyRegistry.start();
+
+</code></pre></noscript></div>
+
+
+<p>Look Ma, No leaks!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1165,13 +1360,21 @@ and through fun experiments, a blog is actually born! Life is beautiful&hellip;<
 </div>
 <aside class="sidebar">
   
-    <section>
-  <h1>About Me</h1>
-  <a href="/about">Daytime hacker, midnight philosopher</a>
+    <section class="about">
+  <h1>
+    <a href="/about">
+      <img src="http://www.gravatar.com/avatar/d2d5c5e3d38f94fb0dcdd78749064479?s=140" alt="Gravatar of Aaron Qian " title="Gravatar of Aaron Qian" />
+      <p>Me</p>
+    </a>
+  </h1>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/">Dm-is-slug 0.10.2 Now on GemCutter</a>
@@ -1189,29 +1392,8 @@ and through fun experiments, a blog is actually born! Life is beautiful&hellip;<
         <a href="/blog/2009/04/12/javascript-bdd-test-frameworks-compared/">Javascript BDD Test Frameworks Compared</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2009/04/07/redcloth-ate-my-notextile/">Redcloth Ate My Notextile Tag</a>
-      </li>
-    
   </ul>
 </section>
-
-<section>
-  <h1>Latest Tweets</h1>
-  <ul id="tweets">
-    <li class="loading">Status updating&#8230;</li>
-  </ul>
-  <script type="text/javascript">
-    $.domReady(function(){
-      getTwitterFeed("aq1018", 4, false);
-    });
-  </script>
-  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
-  
-    <a href="http://twitter.com/aq1018" class="twitter-follow-button" data-width="208px" data-show-count="false">Follow @aq1018</a>
-  
-</section>
-
 
 <section>
   <h1>GitHub Repos</h1>
@@ -1233,14 +1415,25 @@ and through fun experiments, a blog is actually born! Life is beautiful&hellip;<
 
         github.showRepos({
             user: 'aq1018',
-            count: 0,
-            skip_forks: true,
+            count: 10,
+            skip_forks: false,
             target: '#gh_repos'
         });
     });
   </script>
   <script src="/javascripts/github.js" type="text/javascript"> </script>
 </section>
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/aq1018?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
 
 
   
