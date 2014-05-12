@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | AQ]]></title>
+  <link href="http://aq1018.github.com/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.com/"/>
+  <updated>2014-05-11T21:19:17-07:00</updated>
+  <id>http://aq1018.github.com/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[dm-is-slug 0.10.2 Now on GemCutter]]></title>
+    <link href="http://aq1018.github.com/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/"/>
+    <updated>2010-02-08T22:05:00-08:00</updated>
+    <id>http://aq1018.github.com/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter</id>
+    <content type="html"><![CDATA[<p>I created a <a href="http://datamapper.org">datamapper</a> plugin called
+<a href="http://github.com/aq1018/dm-is-slug">dm-is-slug</a> in 2009 to
+ease the pain of handling permalinks or url slugs in my
+<a href="http://www.merbivore.com%20project">merb</a>.</p>
+
+<p>So, I spent some time merging commits from <a href="http://github.com/cheba">Alex Mankuta</a>
+whom has fixed many bugs, and now it works much better. Thanks, cheba!</p>
+
+<p>I also added support for <a href="http://rubyforge.org/projects/unidecode/">unidecoding</a>,
+which allows you to turn strings like <em>&ldquo;你好&rdquo;</em> into <em>&ldquo;ni-hao&rdquo;</em>.</p>
+
+<p>Lastly, the gem is pushed to <a href="http://gemcutter.org">gemcutter</a>
+for easy gem install. That didn&rsquo;t take too long! :)</p>
+
+<p><strong><a href="http://github.com/aq1018/dm-is-slug">Find out how to use dm-is-slug on github!</a></strong></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Redcloth Ate My notextile Tag]]></title>
+    <link href="http://aq1018.github.com/blog/2009/04/07/redcloth-ate-my-notextile/"/>
+    <updated>2009-04-07T00:43:00-07:00</updated>
+    <id>http://aq1018.github.com/blog/2009/04/07/redcloth-ate-my-notextile</id>
+    <content type="html"><![CDATA[<p>While playing with textile and UltraViolet in Webby,
+I found textile is re-rendering my UltraViolet generated HTML contents
+disregarding &lt;notextile> tags.The problem is with UltraVilet versions
+4.1.1 to 4.1.9 has ignored this tag somehow.There is even a
+<a href="http://jgarber.lighthouseapp.com/projects/13054/tickets/119-notextile-blocks-included-in-following-paragrap">bug ticket</a> about it.</p>
+
+<p>The solution?</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>console </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo gem uninstall RedCloth -a
+</span><span class='line'>sudo gem install RedCloth -v=4.1.0</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This installs RedCloth version 4.1.0 which doesn&rsquo;t eat
+your <code>&lt;notextile&gt;</code> tags and behave correctly for me.
+Next I just did a <code>webby rebuild</code> and everything worked out for me!</p>
+
+<p>Cheers!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Adding Blog Tags to Webby]]></title>
+    <link href="http://aq1018.github.com/blog/2009/04/06/adding-blog-tags-using-webby/"/>
+    <updated>2009-04-06T19:12:00-07:00</updated>
+    <id>http://aq1018.github.com/blog/2009/04/06/adding-blog-tags-using-webby</id>
+    <content type="html"><![CDATA[<p>The blog now looks better and better, but it is still missing a key feature &mdash; tags.</p>
+
+<p>Let&rsquo;s bust it out! Here is my plan:</p>
+
+<ul>
+<li>Adding a tags attribute under each blog&rsquo;s meta data</li>
+<li>Make a helper that reads each blog and count the occurance of each tag</li>
+<li>Make a partial that links to each tags</li>
+<li>Make a rake task that auto generates tags folder</li>
+</ul>
+
+
+<h2>Adding a tags attribute under each blog&rsquo;s meta data</h2>
+
+<p> This is easy, just open up a post and add a <code>tags</code> attribute to the meta data:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>example post.txt </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">title</span>         <span class="p-Indicator">:</span>   <span class="l-Scalar-Plain">Adding Blog Tags using Webby</span>
+</span><span class='line'><span class="l-Scalar-Plain">created_at</span>    <span class="p-Indicator">:</span>   <span class="l-Scalar-Plain">2009-04-06 19:12:00.343030 +08:00</span>
+</span><span class='line'><span class="l-Scalar-Plain">blog_post</span>     <span class="p-Indicator">:</span>   <span class="l-Scalar-Plain">true</span>
+</span><span class='line'><span class="l-Scalar-Plain">filter</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="nl">&amp;ndash</span><span class="l-Scalar-Plain">; erb</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">&amp;ndash; textile&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;h1&gt;Add some tags for this post&lt;/h1&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;p&gt;tags</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="nl">&amp;ndash</span><span class="l-Scalar-Plain">; ruby</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">&amp;ndash; webby</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h2>Make tags helper</h2>
+
+<p>All I need to do is to make a tags helper module that does the counting for me,
+and register it with Webby. Here is the code:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>lib/tags_helper.rb </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">module</span> <span class="nn">TagsHelper</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  # find all blog posts</span>
+</span><span class='line'><span class="sr">  def posts(limit=:all, find_options=nil)&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">options</span> <span class="o">=</span> <span class="p">{</span> <span class="ss">:in_directory</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="s1">&#39;articles&#39;</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:recursive</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="kp">true</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:blog_post</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="kp">true</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:sort_by</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="s2">&quot;created_at&quot;</span><span class="p">,</span>
+</span><span class='line'>            <span class="ss">:reverse</span> <span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span> <span class="kp">true</span><span class="p">}</span>
+</span><span class='line'><span class="n">options</span><span class="o">.</span><span class="n">merge!</span><span class="p">(</span><span class="n">find_options</span><span class="p">)</span> <span class="k">if</span> <span class="n">find_options</span>
+</span><span class='line'><span class="o">::</span><span class="ss">Webby</span><span class="p">:</span><span class="ss">:Resources</span><span class="o">.</span><span class="n">pages</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  def tags_hash&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">return</span> <span class="vi">@tags_hash</span> <span class="k">if</span> <span class="vi">@tags_hash</span>
+</span><span class='line'><span class="vi">@tags_hash</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'><span class="n">posts</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">post</span><span class="o">|</span>
+</span><span class='line'>  <span class="n">post</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">tag</span><span class="o">|</span>
+</span><span class='line'>    <span class="vi">@tags_hash</span><span class="o">[</span><span class="n">tag</span><span class="o">]</span> <span class="o">||=</span><span class="mi">0</span>
+</span><span class='line'>    <span class="vi">@tags_hash</span><span class="o">[</span><span class="n">tag</span><span class="o">]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class='line'>  <span class="k">end</span> <span class="k">if</span> <span class="n">post</span><span class="o">.</span><span class="n">tags</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;@tags_hash</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">def</span> <span class="nf">posts_with_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="ss">:all</span><span class="p">,</span> <span class="n">find_options</span><span class="o">=</span><span class="kp">nil</span><span class="p">)</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;posts(limit, find_options) do |post|</span>
+</span><span class='line'><span class="sr">  post.tags &amp;amp;&amp;amp; post.tags.include?(tag)</span>
+</span><span class='line'><span class="sr">end</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  end</span>
+</span><span class='line'><span class="sr">end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="ss">Webby</span><span class="p">:</span><span class="ss">:Helpers</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="no">TagsHelper</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p><code>posts</code> is a handy little short cut for getting all blog posts,
+much shorter to type. You can also pass in the <code>limit</code>,
+and <code>find_options</code> to customize your find. Example:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>finding first 10 posts in blogs dir, and sorted in descending chronological order. </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">posts</span> <span class="mi">10</span><span class="p">,</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;  :in_directory =&amp;gt; &#39;blogs&#39;,</span>
+</span><span class='line'><span class="sr">  :sort_by      =&amp;gt; &#39;created_at&#39;,</span>
+</span><span class='line'><span class="sr">  :reverse      =&amp;gt; true</span>
+</span><span class='line'><span class="sr">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;</span><span class="sr">/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p><code>tags_hash</code> returns a hash with tag name and occurance as the key and value.</p>
+
+<p><code>posts_with_tag</code> finds all the blog posts related to a tag.</p>
+
+<h2>Make a partial</h2>
+
+<p>Now that we have the helper, we can make a partial that displays the tags. I made it in HAML:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span><em>partials/</em>tags.haml </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='haml'><span class='line'><span class="nt">%ul</span>
+</span><span class='line'>  <span class="c">/ sort tags in alphabetical order,</span>
+</span><span class='line'>  <span class="c">/ and then generate links for each tag</span>
+</span><span class='line'>  <span class="p">-</span><span class="n">tags_hash</span><span class="o">.</span><span class="n">keys</span><span class="o">.</span><span class="n">sort</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">tag</span><span class="o">|&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;%li
+</span><span class='line'>  <span class="nt">%a</span><span class="p">{</span><span class="ss">:href</span><span class="o">=&amp;</span><span class="n">gt</span><span class="p">;</span><span class="s2">&quot;/tags/</span><span class="si">#{</span><span class="n">tag</span><span class="si">}</span>&quot;}= tag
+</span><span class='line'>  <span class="p">==</span>(<span class="si">#{</span><span class="n">tags_hash</span><span class="o">[</span><span class="n">tag</span><span class="o">]</span><span class="si">}</span>)
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>You can see the partial in effect on the lower right side of the page in footer.
+This is basic and nothing fancy&hellip;</p>
+
+<h2>Make a Rake Task</h2>
+
+<p>Now the tags are in place, we want actually display the tags pages.
+We make a new rake task to generate all the tags page for us.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>tags.rake </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">lib</span><span class="o">/</span><span class="n">tags</span><span class="o">.</span><span class="n">rb</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'><span class="kp">include</span> <span class="no">TagsHelper</span>
+</span><span class='line'><span class="n">namespace</span> <span class="ss">:tags</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">desc</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">auto</span> <span class="n">generate</span> <span class="n">all</span> <span class="n">tags</span> <span class="n">page</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">task</span> <span class="ss">:generate</span> <span class="k">do</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;::Webby.load_files</span>
+</span><span class='line'><span class="sr">tags_hash.keys.each do |tag|</span>
+</span><span class='line'><span class="sr">  dir = Webby.site.tags_dir</span>
+</span><span class='line'><span class="sr">  page = File.join(dir, File.basename(tag))</span>
+</span><span class='line'><span class="sr">  page =</span>
+</span><span class='line'><span class="sr">    Webby::Builder.create(</span>
+</span><span class='line'><span class="sr">      page,</span>
+</span><span class='line'><span class="sr">      :from =&amp;gt; &quot;</span><span class="si">#{</span><span class="no">Webby</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">template_dir</span><span class="si">}</span><span class="sr">/</span><span class="n">tags</span><span class="o">/</span><span class="n">generate</span><span class="o">.</span><span class="n">erb</span><span class="s2">&quot;,</span>
+</span><span class='line'><span class="s2">      :locals =&amp;gt; {:tag =&amp;gt; tag, :directory =&amp;gt; dir}</span>
+</span><span class='line'><span class="s2">    )</span>
+</span><span class='line'><span class="s2">end</span>
+</span><span class='line'><span class="s2">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">&lt;p&gt;  end&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">&lt;p&gt;  desc &amp;ldquo;remove all tags page&amp;rdquo;</span>
+</span><span class='line'><span class="s2">  task :remove do&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">&lt;pre&gt;&lt;code&gt;rm_r Webby.site.content_dir + &quot;</span><span class="o">/</span><span class="s2">&quot; + Webby.site.tags_dir</span>
+</span><span class='line'><span class="s2">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">&lt;p&gt;  end&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">&lt;p&gt;  desc &amp;ldquo;regenerate all tags page&amp;rdquo;</span>
+</span><span class='line'><span class="s2">  task :regenerate =&gt; [:remove, :generate]</span>
+</span><span class='line'><span class="s2">end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>You will also need the corresponding <code>templates/tags/generate.erb</code>,
+which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github account</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[This Blog is Made using Webby]]></title>
+    <link href="http://aq1018.github.com/blog/2009/04/06/this-blog-is-made-using-webby/"/>
+    <updated>2009-04-06T00:51:00-07:00</updated>
+    <id>http://aq1018.github.com/blog/2009/04/06/this-blog-is-made-using-webby</id>
+    <content type="html"><![CDATA[<p>After a few days of work, I finally finished the layout for my blog.
+During the construction of this blog, I wanted to use a very light framework.
+Being mainly a Ruby On Rails developer I found a ruby framework called
+<a href="http://webby.rubyforge.org/">Webby</a> that works perfectly with my requirements.</p>
+
+<p>From the Webby describes itself as:</p>
+
+<blockquote><p>Webby is a fantastic little website management system.
+It would be called a content management system if it were a bigger kid.
+But, it’s just a runt with a special knack for transforming text.
+And that’s really all it does – manages the legwork of turning text into something else,
+an ASCII Alchemist if you will."</p></blockquote>
+
+<p>Sounds nice?</p>
+
+<p>It supports ERB, haml, sass, Textile, Markdown and a set of other
+arsenels you can use at your disposal. Another reason I choose Webby
+is because it supports <a href="http://ultraviolet.rubyforge.org/">UltraViolet</a>
+which comes in handy when you need to demonstrate a few lines of code.
+Even though it also supports <a href="http://coderay.rubychan.de/">CodeRay</a>,
+but I much perfer UltraViolet as it supports a lot more
+css hightlighting templates and languages.</p>
+
+<p>Another highlight of Webby is that it uses A CSS framework called
+<a href="http://code.google.com/p/blueprintcss/">BluePrint</a>This little CSS
+framework makes website layout a breeze. Plus it has a powerful
+customization utility that can generate custom sized grid with
+meaningful class names.</p>
+
+<h2>What about commenting?</h2>
+
+<p>As Maxime once commented about my idea of using Webby to generate a static Blog:</p>
+
+<blockquote><p>&ldquo;A blog without comments aint a blog!&rdquo;</p></blockquote>
+
+<p>Sure, you&rsquo;ve got a point! My answer to this problem is <a href="http://disqus.com/">Disqus</a>.
+It provides a JavaScript Widget that handles all the blog comments for you.
+No more custom coding for comments, wrestling with SPAM, etc.
+Just drop in their code, and sit and relax.
+You&rsquo;ve got a powerful commenting system on your blog already! Sweet&hellip;</p>
+
+<h2>Lastly, a Gift if you care</h2>
+
+<p>if the idea of making a blog with Webby sounds nice to you,
+maybe you can give it a try as well!</p>
+
+<p>The source of this blog is <a href="http://github.com/aq1018/aaron-blog">hosted</a>
+on <a href="http://github.com/">GitHub</a>.</p>
+
+<p>Anyways, it was a lot of fun playing around using this little powerful framework,
+and through fun experiments, a blog is actually born! Life is beautiful&hellip;</p>
+]]></content>
+  </entry>
+  
+</feed>
