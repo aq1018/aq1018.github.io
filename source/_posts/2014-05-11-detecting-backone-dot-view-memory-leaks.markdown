@@ -6,6 +6,9 @@ comments: true
 categories: [javascript, backbone]
 ---
 
+**Edit**: I have packaged it into
+[backbone.leakchecker](https://github.com/aq1018/Backbone.LeakChecker). Happy leak hunting!
+
 Do you think you write good Backbone.js code? Are you sure your view is not
 leaking memory? Are you confident that you properly disposed all your views
 by calling `view.remove()`? Are you sure didn't even miss one of them?
