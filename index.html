@@ -9,8 +9,7 @@
   <meta name="author" content="Aaron Qian">
 
   
-  <meta name="description" content="Edit: I have packaged it into
-backbone.leakchecker. Happy leak hunting! Do you think you write good Backbone.js code? Are you sure your view is not &hellip;">
+  <meta name="description" content="A few weeks ago, I was at NationBuilder building a GeoJSON API for organizers. The end goal for this project is to provide accurate political &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@ backbone.leakchecker. Happy leak hunting! Do you think you write good Backbone.j
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://aq1018.github.com">
+  <link rel="canonical" href="http://aq1018.github.io">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="AQ" type="application/atom+xml">
@@ -51,7 +50,7 @@ backbone.leakchecker. Happy leak hunting! Do you think you write good Backbone.j
   
 <form action="http://google.com/search" method="get">
   <fieldset role="search">
-    <input type="hidden" name="q" value="site:aq1018.github.com" />
+    <input type="hidden" name="q" value="site:aq1018.github.io" />
     <input class="search" type="text" name="q" results="0" placeholder="Search"/>
   </fieldset>
 </form>
@@ -67,6 +66,394 @@ backbone.leakchecker. Happy leak hunting! Do you think you write good Backbone.j
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/">Streaming GeoJSON With GDAL, Rack::Chunked, and Rails Live Streaming</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-22T22:02:45-07:00" pubdate data-updated="true">Aug 22<span>nd</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>A few weeks ago, I was at <a href="http://nationbuilder.com/">NationBuilder</a> building a <a href="http://geojson.org/">GeoJSON</a> API for organizers. The end goal for this project is to provide accurate political districting information through this API and exposes a map management interface for district updates.</p>
+
+<h2>Application Architecture</h2>
+
+<p>This application is built on top of the popular <a href="http://rubyonrails.org/">Ruby On Rails</a> framework, and uses <a href="http://postgis.net/">PostGIS</a> as geographic data storage backend. GeoJSON conversion is done by using <a href="https://github.com/rgeo/rgeo-geojson">rgeo-geojson</a> gem since it fits nicely with <a href="https://github.com/rgeo/activerecord-postgis-adapter">activerecord-postgis-adapter</a>.</p>
+
+<h2>Performance Issues</h2>
+
+<p>The application was initially running smoothly, but problems started to emerge when the generated GeoJSON data became larger over time. The API server would often time out, stop responding, or run out of memory when GeoJSON response size approached a couple MB under light load. As a result, map rendering became so slow and unstable, it was painful to use.</p>
+
+<h3>Memory Bloat</h3>
+
+<p>Our GeoJSON data was initially loaded from database by ActiveReocrd, and then converted into <code>RGeo::Geometry</code> objects. The entire dataset is buffered in memory. These objects are then converted into hashes with <code>rgeo-geojson</code>. These converted hashes represents takes up a lot of memory as well. Finally the resulting hashes are merged with other database properties and pushed on an array. All buffered in memory!</p>
+
+<h3>Response Time</h3>
+
+<p>The application spends the majority of its time converting <code>RGeo::Geometry</code> objects into GeoJSON hashes. The CPU will hit 100% and memory will steadily clime. Upon closer inspection, I found out that <code>rgeo-geojson</code> gem does the conversion entirely in Ruby! When the dataset gets too big, the browser or our proxy will either run out of patience and issue timeouts or our application process will have consumed so much memory it was killed by <a href="http://mmonit.com/monit/">monit</a>.</p>
+
+<h3>Understanding Root Cause</h3>
+
+<p>As all seasoned software engineers would do, I first analyzed the symptoms at hand and concluded the following root cause:</p>
+
+<ul>
+<li>GeoJSON rendering is too slow.</li>
+<li>dataset buffering causes memory bloat.</li>
+</ul>
+
+
+<h2>Research, Research, Research!</h2>
+
+<p>My initial effort was focused on solving the rendering speed issue. I know I cannot convert GeoJSON in ruby since ruby isn&rsquo;t exactly suitable for this kind of heavy duty data crunching when speed is a core requirement.</p>
+
+<h3>The PostGIS route</h3>
+
+<p>The immediate thought came to mind is to have PostGIS generating the GeoJSON for me, and I found out <a href="http://postgis.org/docs/ST_AsGeoJSON.html">st_asgeojson</a>. However, this doesn&rsquo;t solve my problem since I will have to convert the generated GeoJSON back into hashes and merge database properties. There&rsquo;s gotta be a better way!</p>
+
+<h3>GDAL</h3>
+
+<p>After some more research I found out a little commandline tool called <code>ogr2ogr</code> from the wonderful <a href="http://www.gdal.org/">GDAL</a> library. This tool can execute supplied SQL statements and convert the results into GeoJSON FeatureCollection. This is perfect!</p>
+
+<p>Here is an example on how to use it:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>ogr2ogr -f GeoJSON /vsistdout/ \
+</span><span class='line'>  "PG:host=&lt;host&gt; dbname=&lt;dbname&gt; user=&lt;user&gt; password=&lt;password&gt;" \
+</span><span class='line'>  -sql "SELECT name, geom FROM regions LIMIT 100"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <code>-f</code> flag indicates the output format, in this case I used GeoJSON. <code>/vsistdout/</code> means I want to output the geojson directly to STDOUT.</p>
+
+<p>I gave it a spin, and the rendering speed is blazing fast! Ok, I&rsquo;m sticking with it!</p>
+
+<h3>Interfacing with Rails</h3>
+
+<p>In order to construct the command, I need to convert an ActiveRecord Scope into SQL statements.</p>
+
+<h3>SQL Statement</h3>
+
+<p>This is easy enough. <code>#to_sql</code> method on ActiveRecord scope will do the trick. If you are using Rails 4, don&rsquo;t forget to wrap this method inside <code>scope.connection.unprepared_statement</code> block to generate the full statement.</p>
+
+<p>Something simple like this would do:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">sql</span>
+</span><span class='line'>  <span class="vi">@scope</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">unprepared_statement</span> <span class="p">{</span> <span class="vi">@scope</span><span class="o">.</span><span class="n">to_sql</span> <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>DB Connection String</h3>
+
+<p>The next step is to fetch the Rails database configuration and convert it into the db connection string expected by <code>ogr2ogr</code>. Here is a snippet:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">conn_str</span>
+</span><span class='line'>  <span class="n">db_config</span> <span class="o">=</span> <span class="no">Rails</span><span class="o">.</span><span class="n">configuration</span><span class="o">.</span><span class="n">database_configuration</span><span class="o">[</span><span class="no">Rails</span><span class="o">.</span><span class="n">env</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">host</span>      <span class="o">=</span> <span class="n">db_config</span><span class="o">[</span><span class="s1">&#39;host&#39;</span><span class="o">]</span>
+</span><span class='line'>  <span class="n">port</span>      <span class="o">=</span> <span class="n">db_config</span><span class="o">[</span><span class="s1">&#39;port&#39;</span><span class="o">]</span>
+</span><span class='line'>  <span class="n">database</span>  <span class="o">=</span> <span class="n">db_config</span><span class="o">[</span><span class="s1">&#39;database&#39;</span><span class="o">]</span>
+</span><span class='line'>  <span class="n">username</span>  <span class="o">=</span> <span class="n">db_config</span><span class="o">[</span><span class="s1">&#39;username&#39;</span><span class="o">]</span>
+</span><span class='line'>  <span class="n">password</span>  <span class="o">=</span> <span class="n">db_config</span><span class="o">[</span><span class="s1">&#39;password&#39;</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">args</span> <span class="o">=</span> <span class="o">[]</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">args</span><span class="o">.</span><span class="n">push</span> <span class="s2">&quot;host=</span><span class="si">#{</span><span class="n">host</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">host</span>
+</span><span class='line'>  <span class="n">args</span><span class="o">.</span><span class="n">push</span> <span class="s2">&quot;port=</span><span class="si">#{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">port</span>
+</span><span class='line'>  <span class="n">args</span><span class="o">.</span><span class="n">push</span> <span class="s2">&quot;dbname=</span><span class="si">#{</span><span class="n">database</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">database</span>
+</span><span class='line'>  <span class="n">args</span><span class="o">.</span><span class="n">push</span> <span class="s2">&quot;user=</span><span class="si">#{</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">username</span>
+</span><span class='line'>  <span class="n">args</span><span class="o">.</span><span class="n">push</span> <span class="s2">&quot;password=</span><span class="si">#{</span><span class="n">password</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">password</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="s2">&quot;PG:</span><span class="se">\&quot;</span><span class="si">#{</span><span class="n">args</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Stiching It Togther</h3>
+
+<p>The entire command is constructed as follows:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">command</span>
+</span><span class='line'>  <span class="o">[</span>
+</span><span class='line'>    <span class="c1"># the command name</span>
+</span><span class='line'>    <span class="s1">&#39;ogr2ogr&#39;</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># output geojson to stdout</span>
+</span><span class='line'>    <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="s1">&#39;GeoJSON&#39;</span><span class="p">,</span> <span class="s1">&#39;/vsistdout/&#39;</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># postgres db config</span>
+</span><span class='line'>    <span class="n">conn_str</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># SQL statement to run</span>
+</span><span class='line'>    <span class="s1">&#39;-sql&#39;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">#{</span><span class="n">sql</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="o">].</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Running the command</h3>
+
+<p>Run the generated command as a sub-process and get the STDOUT as an IO object.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">run</span>
+</span><span class='line'>  <span class="no">IO</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay! Fast GeoJSON rendering!</p>
+
+<h2>Rails Live Streaming</h2>
+
+<p>You can read to the end of the IO stream and just send it off, but where is the fun? Let&rsquo;s stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This increase response time and reduces memory footprint. Sweet deal!</p>
+
+<h3>Add Chunked Enocding Support to Rails</h3>
+
+<p>In order to support chunked encoding, we need to add this into our <code>config/application.rb</code> file:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># config/application.rb</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">MyApp</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Application</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1"># other rails application configurations</span>
+</span><span class='line'>    <span class="c1">#</span>
+</span><span class='line'>    <span class="c1"># ...</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># Add Rack::Chunked before Rack::Sendfile</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="n">middleware</span><span class="o">.</span><span class="n">insert_before</span><span class="p">(</span><span class="ss">Rack</span><span class="p">:</span><span class="ss">:Sendfile</span><span class="p">,</span> <span class="ss">Rack</span><span class="p">:</span><span class="ss">:Chunked</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This inserts the <code>Rack::Chunked</code> middleware into the correct position of Rails middleware stack to support HTTP 1.1 chunked encoding.</p>
+
+<h3>Aligning Streaming Interfaces</h3>
+
+<h4>ActionController::Metal Streaming Interface</h4>
+
+<p>Since I was building an API, I used <code>ActionController::Metal</code> instead of <code>ActionController::Base</code> with is a much smaller abstraction for <code>Rack</code> interface. The response body is set by using <code>#response_body=</code> method.</p>
+
+<p>In order to use chunked encoding, We need to give <code>#response_body=</code> method an object that responds to <code>#each</code> and optionally <code>#close</code>, where <code>#each</code> will yield data in chunks, and <code>#close</code> is required if you need to close underlaying file descriptors or any cleanup operations. The goal is to wrap the <code>ogr2ogr</code> IO stream object to something that <code>#response_body=</code> expects.</p>
+
+<h4>Ruby IO Interface</h4>
+
+<p>Ruby <a href="http://www.ruby-doc.org/core-2.1.2/IO.html">IO</a> class already implements <code>#each</code> and <code>#close</code> methods. However the behavior of <code>#each</code> is not ideal in our use case. <code>IO#each</code> is an alias to <code>IO#each_line</code> which yields data line by line. <code>ogr2ogr</code> generates the GeoJSON in a single gigantic line. We need to split each chunk by byte size instead of by line.</p>
+
+<p>Luckily, Ruby IO offers a nice method called <code>#readpartial</code> that takes a <code>maxlen</code> argument. This argument tells the IO stream how many bytes read. When invoked, the IO object will wait until enough bytes are available and return a string with the requested byte size (or less if end of the stream is reached, or raises EOFError).</p>
+
+<h3>Chunking IO Stream</h3>
+
+<p>With the long explanation above, we are now equipped with enough knowledge to create a wrapper to handle the chunking. It turns out pretty simple:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># lib/chunked_stream.rb</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1"># ChunkedStream</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1"># It takes any IO object and reads the output in chunks.</span>
+</span><span class='line'><span class="c1"># It implements #each and #close and is designed to be used</span>
+</span><span class='line'><span class="c1"># to interface with Rails Live Stream or Rack::Chunked</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">ChunkedStream</span>
+</span><span class='line'>  <span class="no">CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">4</span> <span class="c1"># read in 4 kB size</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:io</span><span class="p">,</span> <span class="ss">:chunk_size</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">chunk_size</span> <span class="o">=</span> <span class="no">CHUNK_SIZE</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@io</span> <span class="o">=</span> <span class="n">io</span>
+</span><span class='line'>    <span class="vi">@chunk_size</span> <span class="o">=</span> <span class="n">chunk_size</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">each</span>
+</span><span class='line'>    <span class="k">while</span> <span class="n">chunk</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">readpartial</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">yield</span> <span class="n">chunk</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">rescue</span> <span class="no">EOFError</span> <span class="o">=&gt;</span> <span class="n">e</span>
+</span><span class='line'>    <span class="kp">nil</span>
+</span><span class='line'>  <span class="k">ensure</span>
+</span><span class='line'>    <span class="n">close</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">close</span>
+</span><span class='line'>    <span class="n">io</span><span class="o">.</span><span class="n">close</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now we have all the Lego pieces in place! let&rsquo;s put them in good use:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># In your ActionController::Metal sub class</span>
+</span><span class='line'><span class="c1"># that generate the geojson</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="o">=</span> <span class="no">Region</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">io</span> <span class="o">=</span> <span class="no">GeojsonCommand</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span><span class="o">.</span><span class="n">run</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="ss">:ok</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;application/json&#39;</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">response_body</span> <span class="o">=</span> <span class="no">ChunkedStream</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">io</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Bonus: Compressed Chunked Encoding</h3>
+
+<p>Somewhere during the research, I came across <a href="http://robots.thoughtbot.com/content-compression-with-rack-deflater">Rack::Deflater</a>. This is a middleware that checks for <code>Accept-Encoding</code> in request headers, and compresses your response on the fly!</p>
+
+<p>The trick to get it working with <code>Rack::Chunked</code> is to insert this middleware right after <code>Rack::Chunked</code>. This is because we need to compress each data chunk, instead of the entire request.</p>
+
+<p>To enable compression, all you need to do is add the following line in your <code>config/application.rb</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">config</span><span class="o">.</span><span class="n">middleware</span><span class="o">.</span><span class="n">insert_after</span><span class="p">(</span><span class="ss">Rack</span><span class="p">:</span><span class="ss">:Chunked</span><span class="p">,</span> <span class="ss">Rack</span><span class="p">:</span><span class="ss">:Deflater</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Some Caveats</h2>
+
+<p>Although the speed has been significantly improved. There are still some caveats to watch for.</p>
+
+<h3>ogr2ogr sub-process error handling</h3>
+
+<p>Currently the code assumes <code>ogr2ogr</code> sub-process can run successfully all the time, and we all know this is unrealistic. A better error handling process is needed to make it more solid.</p>
+
+<h3>Large RPM</h3>
+
+<p>Under high load, many <code>ogr2ogr</code> sub-processes will be created. The behavior under this situation is unknown. But this is an internal API with very light traffic. Thus this is not a concern for me (yet). I think some kind of in-process worker pool and monitor could mostly solve this issue, but I have no plan to implement this for now.</p>
+
+<h2>Go Try It Out!</h2>
+
+<p>Try this method is you are facing similar issues, and let me know your results. Hopefully this has been helpful for you!</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1376,6 +1763,10 @@ and through fun experiments, a blog is actually born! Life is beautiful&hellip;<
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/">Streaming GeoJSON With GDAL, Rack::Chunked, and Rails Live Streaming</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a>
       </li>
     
@@ -1389,10 +1780,6 @@ and through fun experiments, a blog is actually born! Life is beautiful&hellip;<
     
       <li class="post">
         <a href="/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/">Inspec - Yet Another Javascript BDD Test Framework</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2009/04/12/javascript-bdd-test-frameworks-compared/">Javascript BDD Test Frameworks Compared</a>
       </li>
     
   </ul>

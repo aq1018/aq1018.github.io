@@ -1,59 +1,65 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>http://aq1018.github.com/blog/2009/04/06/this-blog-is-made-using-webby/</loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
+        <loc>http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
-        <loc>http://aq1018.github.com/blog/2009/04/06/adding-blog-tags-using-webby/</loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
+        <loc>http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
-        <loc>http://aq1018.github.com/blog/2009/04/07/redcloth-ate-my-notextile/</loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
-    </url>
-    <url>
-        <loc>
-            http://aq1018.github.com/blog/2009/04/12/javascript-bdd-test-frameworks-compared/
-        </loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
+        <loc>http://aq1018.github.io/blog/2009/04/07/redcloth-ate-my-notextile/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
         <loc>
-            http://aq1018.github.com/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/
+            http://aq1018.github.io/blog/2009/04/12/javascript-bdd-test-frameworks-compared/
         </loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
         <loc>
-            http://aq1018.github.com/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/
+            http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/
         </loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
-    </url>
-    <url>
-        <loc>http://aq1018.github.com/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/</loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
         <loc>
-            http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/
+            http://aq1018.github.io/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/
         </loc>
-        <lastmod>2014-05-13T01:42:40-07:00</lastmod>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
-        <loc>http://aq1018.github.com/about/</loc>
-        <lastmod>2014-05-12T00:20:20-07:00</lastmod>
+        <loc>http://aq1018.github.io/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
-        <loc>http://aq1018.github.com/blog/archives/</loc>
-        <lastmod>2014-05-13T01:42:40-07:00</lastmod>
+        <loc>
+            http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/
+        </loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
-        <loc>http://aq1018.github.com/</loc>
-        <lastmod>2014-05-13T01:42:40-07:00</lastmod>
+        <loc>
+            http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/
+        </loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
     <url>
-        <loc>http://aq1018.github.com/robots.txt</loc>
-        <lastmod>2014-05-11T22:50:17-07:00</lastmod>
+        <loc>http://aq1018.github.io/about/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://aq1018.github.io/blog/archives/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://aq1018.github.io/</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://aq1018.github.io/robots.txt</loc>
+        <lastmod>2014-08-23T01:21:13-07:00</lastmod>
     </url>
 </urlset>

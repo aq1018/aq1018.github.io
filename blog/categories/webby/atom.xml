@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: webby | AQ]]></title>
-  <link href="http://aq1018.github.com/blog/categories/webby/atom.xml" rel="self"/>
-  <link href="http://aq1018.github.com/"/>
-  <updated>2014-05-13T01:42:40-07:00</updated>
-  <id>http://aq1018.github.com/</id>
+  <link href="http://aq1018.github.io/blog/categories/webby/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2014-08-23T01:28:37-07:00</updated>
+  <id>http://aq1018.github.io/</id>
   <author>
     <name><![CDATA[Aaron Qian]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Adding Blog Tags to Webby]]></title>
-    <link href="http://aq1018.github.com/blog/2009/04/06/adding-blog-tags-using-webby/"/>
+    <link href="http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby/"/>
     <updated>2009-04-06T19:12:00-07:00</updated>
-    <id>http://aq1018.github.com/blog/2009/04/06/adding-blog-tags-using-webby</id>
+    <id>http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby</id>
     <content type="html"><![CDATA[<p>The blog now looks better and better, but it is still missing a key feature &mdash; tags.</p>
 
 <p>Let&rsquo;s bust it out! Here is my plan:</p>
@@ -297,9 +297,9 @@ which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github a
   
   <entry>
     <title type="html"><![CDATA[This Blog is Made using Webby]]></title>
-    <link href="http://aq1018.github.com/blog/2009/04/06/this-blog-is-made-using-webby/"/>
+    <link href="http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby/"/>
     <updated>2009-04-06T00:51:00-07:00</updated>
-    <id>http://aq1018.github.com/blog/2009/04/06/this-blog-is-made-using-webby</id>
+    <id>http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby</id>
     <content type="html"><![CDATA[<p>After a few days of work, I finally finished the layout for my blog.
 During the construction of this blog, I wanted to use a very light framework.
 Being mainly a Ruby On Rails developer I found a ruby framework called

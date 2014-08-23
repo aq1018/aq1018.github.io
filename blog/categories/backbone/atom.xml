@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: backbone | AQ]]></title>
-  <link href="http://aq1018.github.com/blog/categories/backbone/atom.xml" rel="self"/>
-  <link href="http://aq1018.github.com/"/>
-  <updated>2014-05-13T01:42:40-07:00</updated>
-  <id>http://aq1018.github.com/</id>
+  <link href="http://aq1018.github.io/blog/categories/backbone/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2014-08-23T01:28:37-07:00</updated>
+  <id>http://aq1018.github.io/</id>
   <author>
     <name><![CDATA[Aaron Qian]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Detecting Backone.View Memory Leaks]]></title>
-    <link href="http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/"/>
+    <link href="http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/"/>
     <updated>2014-05-11T22:09:38-07:00</updated>
-    <id>http://aq1018.github.com/blog/2014/05/11/detecting-backone-dot-view-memory-leaks</id>
+    <id>http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks</id>
     <content type="html"><![CDATA[<p><strong>Edit</strong>: I have packaged it into
 <a href="https://github.com/aq1018/Backbone.LeakChecker">backbone.leakchecker</a>. Happy leak hunting!</p>
 
