@@ -11,6 +11,12 @@ categories:
   - gdal
 ---
 
+## TL;DR
+
+For you busy folks who just want it to work, here is the [gist](https://gist.github.com/aq1018/e3512f763d42ad8cf80b).
+
+## Background
+
 A few weeks ago, I was at [NationBuilder](http://nationbuilder.com/) building a [GeoJSON](http://geojson.org/) API for organizers. The end goal for this project is to provide accurate political districting information through this API and exposes a map management interface for district updates.
 
 ## Application Architecture
