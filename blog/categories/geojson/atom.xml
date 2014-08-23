@@ -4,7 +4,7 @@
   <title><![CDATA[Category: geojson | AQ]]></title>
   <link href="http://aq1018.github.io/blog/categories/geojson/atom.xml" rel="self"/>
   <link href="http://aq1018.github.io/"/>
-  <updated>2014-08-23T01:28:37-07:00</updated>
+  <updated>2014-08-23T02:10:23-07:00</updated>
   <id>http://aq1018.github.io/</id>
   <author>
     <name><![CDATA[Aaron Qian]]></name>
@@ -18,7 +18,13 @@
     <link href="http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/"/>
     <updated>2014-08-22T22:02:45-07:00</updated>
     <id>http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming</id>
-    <content type="html"><![CDATA[<p>A few weeks ago, I was at <a href="http://nationbuilder.com/">NationBuilder</a> building a <a href="http://geojson.org/">GeoJSON</a> API for organizers. The end goal for this project is to provide accurate political districting information through this API and exposes a map management interface for district updates.</p>
+    <content type="html"><![CDATA[<h2>TL;DR</h2>
+
+<p>For you busy folks who just want it to work, here is the <a href="https://gist.github.com/aq1018/e3512f763d42ad8cf80b">gist</a>.</p>
+
+<h2>Background</h2>
+
+<p>A few weeks ago, I was at <a href="http://nationbuilder.com/">NationBuilder</a> building a <a href="http://geojson.org/">GeoJSON</a> API for organizers. The end goal for this project is to provide accurate political districting information through this API and exposes a map management interface for district updates.</p>
 
 <h2>Application Architecture</h2>
 
