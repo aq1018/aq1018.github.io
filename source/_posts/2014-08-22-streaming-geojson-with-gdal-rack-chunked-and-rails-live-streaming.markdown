@@ -108,7 +108,7 @@ def conn_str
 end
 ```
 
-### Stiching It Togther
+### Stitching It Togther
 
 The entire command is constructed as follows:
 
@@ -144,7 +144,7 @@ Yay! Fast GeoJSON rendering!
 
 ## Rails Live Streaming
 
-You can read to the end of the IO stream and just send it off, but where is the fun? Let's stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This increase response time and reduces memory footprint. Sweet deal!
+You can read to the end of the IO stream and just send it off, but where is the fun? Let's stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This improves response time and reduces memory footprint. Sweet deal!
 
 ### Add Chunked Enocding Support to Rails
 
@@ -168,7 +168,7 @@ end
 
 This inserts the `Rack::Chunked` middleware into the correct position of Rails middleware stack to support HTTP 1.1 chunked encoding.
 
-### Aligning Streaming Interfaces
+### Aligning The Stars, Er... I mean Interfaces
 
 #### ActionController::Metal Streaming Interface
 
@@ -182,7 +182,7 @@ Ruby [IO](http://www.ruby-doc.org/core-2.1.2/IO.html) class already implements `
 
 Luckily, Ruby IO offers a nice method called `#readpartial` that takes a `maxlen` argument. This argument tells the IO stream how many bytes read. When invoked, the IO object will wait until enough bytes are available and return a string with the requested byte size (or less if end of the stream is reached, or raises EOFError).
 
-### Chunking IO Stream
+#### Chunking IO Stream
 
 With the long explanation above, we are now equipped with enough knowledge to create a wrapper to handle the chunking. It turns out pretty simple:
 
@@ -239,7 +239,7 @@ def index
 end
 ```
 
-### Bonus: Compressed Chunked Encoding
+### Bonus Stage: On The Fly Compression for Chunked Encoding
 
 Somewhere during the research, I came across [Rack::Deflater](http://robots.thoughtbot.com/content-compression-with-rack-deflater). This is a middleware that checks for `Accept-Encoding` in request headers, and compresses your response on the fly!
 
@@ -251,20 +251,20 @@ To enable compression, all you need to do is add the following line in your `con
 config.middleware.insert_after(Rack::Chunked, Rack::Deflater)
 ```
 
-## Some Caveats
+## Caveats
 
 Although the speed has been significantly improved. There are still some caveats to watch for.
 
-### ogr2ogr sub-process error handling
+### ogr2ogr Sub-Process Error Handling
 
 Currently the code assumes `ogr2ogr` sub-process can run successfully all the time, and we all know this is unrealistic. A better error handling process is needed to make it more solid.
 
-### Large RPM
+### Under Large Load
 
 Under high load, many `ogr2ogr` sub-processes will be created. The behavior under this situation is unknown. But this is an internal API with very light traffic. Thus this is not a concern for me (yet). I think some kind of in-process worker pool and monitor could mostly solve this issue, but I have no plan to implement this for now.
 
 ## Go Try It Out!
 
-Try this method is you are facing similar issues, and let me know your results. Hopefully this has been helpful for you!
+Here is a [gist](https://gist.github.com/aq1018/e3512f763d42ad8cf80b) for you to try it out. Let me know your results / opinions / rants! All is welcome!
 
 
