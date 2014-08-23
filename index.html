@@ -219,7 +219,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h3>Stiching It Togther</h3>
+<h3>Stitching It Togther</h3>
 
 <p>The entire command is constructed as follows:</p>
 
@@ -273,7 +273,7 @@
 
 <h2>Rails Live Streaming</h2>
 
-<p>You can read to the end of the IO stream and just send it off, but where is the fun? Let&rsquo;s stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This increase response time and reduces memory footprint. Sweet deal!</p>
+<p>You can read to the end of the IO stream and just send it off, but where is the fun? Let&rsquo;s stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This improves response time and reduces memory footprint. Sweet deal!</p>
 
 <h3>Add Chunked Enocding Support to Rails</h3>
 
@@ -310,7 +310,7 @@
 
 <p>This inserts the <code>Rack::Chunked</code> middleware into the correct position of Rails middleware stack to support HTTP 1.1 chunked encoding.</p>
 
-<h3>Aligning Streaming Interfaces</h3>
+<h3>Aligning The Stars, Er&hellip; I mean Interfaces</h3>
 
 <h4>ActionController::Metal Streaming Interface</h4>
 
@@ -324,7 +324,7 @@
 
 <p>Luckily, Ruby IO offers a nice method called <code>#readpartial</code> that takes a <code>maxlen</code> argument. This argument tells the IO stream how many bytes read. When invoked, the IO object will wait until enough bytes are available and return a string with the requested byte size (or less if end of the stream is reached, or raises EOFError).</p>
 
-<h3>Chunking IO Stream</h3>
+<h4>Chunking IO Stream</h4>
 
 <p>With the long explanation above, we are now equipped with enough knowledge to create a wrapper to handle the chunking. It turns out pretty simple:</p>
 
@@ -426,7 +426,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h3>Bonus: Compressed Chunked Encoding</h3>
+<h3>Bonus Stage: On The Fly Compression for Chunked Encoding</h3>
 
 <p>Somewhere during the research, I came across <a href="http://robots.thoughtbot.com/content-compression-with-rack-deflater">Rack::Deflater</a>. This is a middleware that checks for <code>Accept-Encoding</code> in request headers, and compresses your response on the fly!</p>
 
@@ -439,21 +439,21 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Some Caveats</h2>
+<h2>Caveats</h2>
 
 <p>Although the speed has been significantly improved. There are still some caveats to watch for.</p>
 
-<h3>ogr2ogr sub-process error handling</h3>
+<h3>ogr2ogr Sub-Process Error Handling</h3>
 
 <p>Currently the code assumes <code>ogr2ogr</code> sub-process can run successfully all the time, and we all know this is unrealistic. A better error handling process is needed to make it more solid.</p>
 
-<h3>Large RPM</h3>
+<h3>Under Large Load</h3>
 
 <p>Under high load, many <code>ogr2ogr</code> sub-processes will be created. The behavior under this situation is unknown. But this is an internal API with very light traffic. Thus this is not a concern for me (yet). I think some kind of in-process worker pool and monitor could mostly solve this issue, but I have no plan to implement this for now.</p>
 
 <h2>Go Try It Out!</h2>
 
-<p>Try this method is you are facing similar issues, and let me know your results. Hopefully this has been helpful for you!</p>
+<p>Here is a <a href="https://gist.github.com/aq1018/e3512f763d42ad8cf80b">gist</a> for you to try it out. Let me know your results / opinions / rants! All is welcome!</p>
 </div>
   
   
