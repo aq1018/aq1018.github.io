@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Javascript BDD Test Frameworks Compared - AQ</title>
+  <meta name="author" content="Aaron Qian">
+
+  
+  <meta name="description" content="Lately, I&rsquo;ve been trying to find a good JavaScript BDD style test framework,
+and I have come across a few of them such as Screw.Unit,
+jSpec, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://aq1018.github.io/blog/2009/04/12/javascript-bdd-test-frameworks-compared">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="AQ" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-8276367-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">AQ</a></h1>
+  
+    <h2>{ ruby: 'awesome', javascript: 'kickass' }</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:aq1018.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Javascript BDD Test Frameworks Compared</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-04-12T21:58:00-07:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Lately, I&rsquo;ve been trying to find a good JavaScript BDD style test framework,
+and I have come across a few of them such as <a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a>,
+<a href="http://visionmedia.github.com/jspec/">jSpec</a>, and <a href="http://jania.pe.kr/aw/moin.cgi/JSSpec">JSSepc</a>. They all have their own unique set of features,
+and are all very innovative. But I couldn&rsquo;t find a exact fit for my requirements.
+While they are all unique in their own ways, and provide some rather innovative
+approach to the BDD problem domain, they all have some drawbacks that
+I find either not acceptable or not easy to use.</p>
+
+<p>Let&rsquo;s have a little analysis on the strength and weakness of each
+frameworks listed above. Ok, you must note that the strength and weakness
+I describe is obviously a subjective opinion of my own,
+that entirely pertains to my own need. You may find the weakness
+I mentioned to be a strength in your case. Don&rsquo;t flame me about it!</p>
+
+<h2>Screw.Unit</h2>
+
+<p>Screw.Unit is the one I found to be the closest to my needs,
+and I believe it is the most popular BDD JavaScript test framework
+at the momenent of this writing.</p>
+
+<h3>Things I like about Screw.Unit</h3>
+
+<p>A key feature of Screw.Unit is the support for nested <code>describes</code> and
+the cascading <code>before</code> (and @after@) behavior. For presentation,
+it has a good HTML runner that generates good looking HTML pages
+to present the test results. You can also create custom matchers
+in a easy and declaritive manner to extend Screw.Unit.
+Because adding member functions to <code>Object</code> is consider a bad practice,
+the use of <code>foo.should be_true</code> cannot be done easily without polluting the
+Object prototype. However they came up with an alternative DSL that
+looks like this: <code>expect(foo).to(equal, true)</code></p>
+
+<h3>Things I don&rsquo;t like about Screw.Unit</h3>
+
+<p>However, there is a few things I don&rsquo;t like about it.</p>
+
+<ul>
+<li>No support for shared specs. (aka <code>it_should_behave_like</code> in <a href="http://rspec.info">RSpec</a>)</li>
+<li>Does not support commandline (due to dependcy on jQuery, DOM, and <a href="http://http://github.com/nkallen/effen/tree/master">concrete Javascript</a></li>
+<li>Does not support server-side javascript (Same reason above)</li>
+</ul>
+
+
+<h2>jSpec</h2>
+
+<p>jSpec is probably the most innovative JavaScript BDD,
+and sometimes I feel that it might be a bit too innovative&hellip;</p>
+
+<h3>Things I like about jSpec</h3>
+
+<p>In jSpec, you don&rsquo;t write true JavaScript, but a higher level DSL,
+which later being parsed and converted to JavaScript and executed.
+It also supports nested <code>describes</code> and <code>before</code>, <code>after</code> blocks.
+It has a wealth of matchers, and has formatters that supports DOM,
+console, and terminal. The size of the script is very small as well.</p>
+
+<p>It is definitely worth checking out.</p>
+
+<h3>Things I don&rsquo;t like about jSpec</h3>
+
+<p><em>Update: jSpec now supports writing with plain JS and shared behaviors now.</em></p>
+
+<p>First, doesn&rsquo;t support shared behaviors.</p>
+
+<p>The DSL looks nice at first sight. In fact I almost mistook it as
+RSpec test suits. But after careful analysis, I have a few doubts
+about jSpec&rsquo;s DSL. First, from the source code, the DSL to JavaScript
+transformation is done using a few lines of Regex only. I&rsquo;m afraid that
+it might not work on edge cases. Next, I looked at the tests for the
+Regex transformation, and I found that the tests are not very strict either.
+Also, I think this makes error tracking rather difficult,
+since the DSL is transformed, it is hard to figure out where the error is if
+you run into some edge cases. I&rsquo;d rather write JavaScript and be at ease,
+instead of write poorly supported FrankensteinScript, and have no clue where went wrong.</p>
+
+<p>Another part I don&rsquo;t like about jSpec is the source code is rather cryptic.
+I have to say the author of jSpec is a very smart person.
+To me, his code is 50% recursive functional rocket science and 50% regex dark magic.
+It took me a long time to decrypt how the code is working under the hood,
+and I can&rsquo;t say I understood it 100%. This makes contributing and extending
+very difficult for most busy programmers (including me) that just want to get the things done.</p>
+
+<h2>JSSpec</h2>
+
+<p>JSSepc is probably the oldest Framework that started to tackle the
+BDD domain in JavaScript. The initial release is dated July 16, 2007.
+Its features are relatively simple compare to above two frameworks.</p>
+
+<h3>Things I like about jSpec</h3>
+
+<p>JSSepc&rsquo;s source code is simple and clean, and relatively easy to extend.
+It has very original syntax as well, Instead of using <code>expect(foo).to(equal, true)</code>,
+its format is <code>value_of(foo).should().be_true()</code>, a bit less sweet&hellip;
+However, it is the first (I think) to tackle BDD in JavaScript,
+it is nice that they first invented this approach,and paved way for
+newer frameworks to learn from. The HTML report is very nice too.
+You can selectively run a set of suit right in the browser.</p>
+
+<h3>Things I don&rsquo;t like about jSpec</h3>
+
+<ul>
+<li>It doesn&rsquo;t support nested <code>describe</code> blocks.</li>
+<li>It doesn&rsquo;t support shared behaviors.</li>
+<li>Not in active development. (Last commit was Dec. 2008)</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Aaron Qian</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-04-12T21:58:00-07:00" pubdate data-updated="true"></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://aq1018.github.io/blog/2009/04/12/javascript-bdd-test-frameworks-compared/" data-via="aq1018" data-counturl="http://aq1018.github.io/blog/2009/04/12/javascript-bdd-test-frameworks-compared/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2009/04/07/redcloth-ate-my-notextile/" title="Previous Post: Redcloth Ate My notextile Tag">&laquo; Redcloth Ate My notextile Tag</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/" title="Next Post: Inspec - Yet Another Javascript BDD Test Framework">Inspec - Yet Another Javascript BDD Test Framework &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section class="about">
+  <h1>
+    <a href="/about">
+      <img src="http://www.gravatar.com/avatar/d2d5c5e3d38f94fb0dcdd78749064479?s=140" alt="Gravatar of Aaron Qian " title="Gravatar of Aaron Qian" />
+      <p>Me</p>
+    </a>
+  </h1>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/">Streaming GeoJSON With GDAL, Rack::Chunked, and Rails Live Streaming</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/">Dm-is-slug 0.10.2 Now on GemCutter</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/">Updates on Inspec - Javascript BDD Framework</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/">Inspec - Yet Another Javascript BDD Test Framework</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/aq1018">@aq1018</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'aq1018',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/aq1018?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Aaron Qian -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'aq1018';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://aq1018.github.io/blog/2009/04/12/javascript-bdd-test-frameworks-compared/';
+        var disqus_url = 'http://aq1018.github.io/blog/2009/04/12/javascript-bdd-test-frameworks-compared/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

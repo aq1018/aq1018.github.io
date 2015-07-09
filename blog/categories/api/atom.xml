@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: api | AQ]]></title>
+  <link href="http://aq1018.github.io/blog/categories/api/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2015-07-09T03:53:57-07:00</updated>
+  <id>http://aq1018.github.io/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Streaming GeoJSON with GDAL, Rack::Chunked, and Rails Live Streaming]]></title>
+    <link href="http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/"/>
+    <updated>2014-08-22T22:02:45-07:00</updated>
+    <id>http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming</id>
+    <content type="html"><![CDATA[<h2>TL;DR</h2>
+
+<p>For you busy folks who just want it to work, here is the <a href="https://gist.github.com/aq1018/e3512f763d42ad8cf80b">gist</a>.</p>
+
+<h2>Background</h2>
+
+<p>A few weeks ago, I was at <a href="http://nationbuilder.com/">NationBuilder</a> building a <a href="http://geojson.org/">GeoJSON</a> API for organizers. The end goal for this project is to provide accurate political districting information through this API and exposes a map management interface for district updates.</p>
+
+<h2>Application Architecture</h2>
+
+<p>This application is built on top of the popular <a href="http://rubyonrails.org/">Ruby On Rails</a> framework, and uses <a href="http://postgis.net/">PostGIS</a> as geographic data storage backend. GeoJSON conversion is done by using <a href="https://github.com/rgeo/rgeo-geojson">rgeo-geojson</a> gem since it fits nicely with <a href="https://github.com/rgeo/activerecord-postgis-adapter">activerecord-postgis-adapter</a>.</p>
+
+<h2>Performance Issues</h2>
+
+<p>The application was initially running smoothly, but problems started to emerge when the generated GeoJSON data became larger over time. The API server would often time out, stop responding, or run out of memory when GeoJSON response size approached a couple MB under light load. As a result, map rendering became so slow and unstable, it was painful to use.</p>
+
+<h3>Memory Bloat</h3>
+
+<p>Our GeoJSON data was initially loaded from database by ActiveReocrd, and then converted into <code>RGeo::Geometry</code> objects. The entire dataset is buffered in memory. These objects are then converted into hashes with <code>rgeo-geojson</code>. These converted hashes represents takes up a lot of memory as well. Finally the resulting hashes are merged with other database properties and pushed on an array. All buffered in memory!</p>
+
+<h3>Response Time</h3>
+
+<p>The application spends the majority of its time converting <code>RGeo::Geometry</code> objects into GeoJSON hashes. The CPU will hit 100% and memory will steadily clime. Upon closer inspection, I found out that <code>rgeo-geojson</code> gem does the conversion entirely in Ruby! When the dataset gets too big, the browser or our proxy will either run out of patience and issue timeouts or our application process will have consumed so much memory it was killed by <a href="http://mmonit.com/monit/">monit</a>.</p>
+
+<h3>Understanding Root Cause</h3>
+
+<p>As all seasoned software engineers would do, I first analyzed the symptoms at hand and concluded the following root cause:</p>
+
+<ul>
+<li>GeoJSON rendering is too slow.</li>
+<li>dataset buffering causes memory bloat.</li>
+</ul>
+
+
+<h2>Research, Research, Research!</h2>
+
+<p>My initial effort was focused on solving the rendering speed issue. I know I cannot convert GeoJSON in ruby since ruby isn&rsquo;t exactly suitable for this kind of heavy duty data crunching when speed is a core requirement.</p>
+
+<h3>The PostGIS route</h3>
+
+<p>The immediate thought came to mind is to have PostGIS generating the GeoJSON for me, and I found out <a href="http://postgis.org/docs/ST_AsGeoJSON.html">st_asgeojson</a>. However, this doesn&rsquo;t solve my problem since I will have to convert the generated GeoJSON back into hashes and merge database properties. There&rsquo;s gotta be a better way!</p>
+
+<h3>GDAL</h3>
+
+<p>After some more research I found out a little commandline tool called <code>ogr2ogr</code> from the wonderful <a href="http://www.gdal.org/">GDAL</a> library. This tool can execute supplied SQL statements and convert the results into GeoJSON FeatureCollection. This is perfect!</p>
+
+<p>Here is an example on how to use it:</p>
+
+<pre><code>ogr2ogr -f GeoJSON /vsistdout/ \
+  "PG:host=&lt;host&gt; dbname=&lt;dbname&gt; user=&lt;user&gt; password=&lt;password&gt;" \
+  -sql "SELECT name, geom FROM regions LIMIT 100"
+</code></pre>
+
+<p>The <code>-f</code> flag indicates the output format, in this case I used GeoJSON. <code>/vsistdout/</code> means I want to output the geojson directly to STDOUT.</p>
+
+<p>I gave it a spin, and the rendering speed is blazing fast! Ok, I&rsquo;m sticking with it!</p>
+
+<h3>Interfacing with Rails</h3>
+
+<p>In order to construct the command, I need to convert an ActiveRecord Scope into SQL statements.</p>
+
+<h3>SQL Statement</h3>
+
+<p>This is easy enough. <code>#to_sql</code> method on ActiveRecord scope will do the trick. If you are using Rails 4, don&rsquo;t forget to wrap this method inside <code>scope.connection.unprepared_statement</code> block to generate the full statement.</p>
+
+<p>Something simple like this would do:</p>
+
+<pre><code class="ruby">def sql
+  @scope.connection.unprepared_statement { @scope.to_sql }
+end
+</code></pre>
+
+<h3>DB Connection String</h3>
+
+<p>The next step is to fetch the Rails database configuration and convert it into the db connection string expected by <code>ogr2ogr</code>. Here is a snippet:</p>
+
+<pre><code class="ruby">def conn_str
+  db_config = Rails.configuration.database_configuration[Rails.env]
+
+  host      = db_config['host']
+  port      = db_config['port']
+  database  = db_config['database']
+  username  = db_config['username']
+  password  = db_config['password']
+
+  args = []
+
+  args.push "host=#{host}" if host
+  args.push "port=#{port}" if port
+  args.push "dbname=#{database}" if database
+  args.push "user=#{username}" if username
+  args.push "password=#{password}" if password
+
+  "PG:\"#{args.join(' ')}\""
+end
+</code></pre>
+
+<h3>Stitching It Togther</h3>
+
+<p>The entire command is constructed as follows:</p>
+
+<pre><code class="ruby">def command
+  [
+    # the command name
+    'ogr2ogr',
+
+    # output geojson to stdout
+    '-f', 'GeoJSON', '/vsistdout/',
+
+    # postgres db config
+    conn_str,
+
+    # SQL statement to run
+    '-sql', "\"#{sql}\""
+  ].join(' ')
+end
+</code></pre>
+
+<h3>Running the command</h3>
+
+<p>Run the generated command as a sub-process and get the STDOUT as an IO object.</p>
+
+<pre><code class="ruby">def run
+  IO.popen(command)
+end
+</code></pre>
+
+<p>Yay! Fast GeoJSON rendering!</p>
+
+<h2>Rails Live Streaming</h2>
+
+<p>You can read to the end of the IO stream and just send it off, but where is the fun? Let&rsquo;s stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This improves response time and reduces memory footprint. Sweet deal!</p>
+
+<h3>Add Chunked Enocding Support to Rails</h3>
+
+<p>In order to support chunked encoding, we need to add this into our <code>config/application.rb</code> file:</p>
+
+<pre><code class="ruby"># config/application.rb
+module MyApp
+  class Application
+
+    #
+    # other rails application configurations
+    #
+    # ...
+
+    # Add Rack::Chunked before Rack::Sendfile
+    config.middleware.insert_before(Rack::Sendfile, Rack::Chunked)
+  end
+end
+</code></pre>
+
+<p>This inserts the <code>Rack::Chunked</code> middleware into the correct position of Rails middleware stack to support HTTP 1.1 chunked encoding.</p>
+
+<h3>Aligning The Stars, Er&hellip; I mean Interfaces</h3>
+
+<h4>ActionController::Metal Streaming Interface</h4>
+
+<p>Since I was building an API, I used <code>ActionController::Metal</code> instead of <code>ActionController::Base</code> with is a much smaller abstraction for <code>Rack</code> interface. The response body is set by using <code>#response_body=</code> method.</p>
+
+<p>In order to use chunked encoding, We need to give <code>#response_body=</code> method an object that responds to <code>#each</code> and optionally <code>#close</code>, where <code>#each</code> will yield data in chunks, and <code>#close</code> is required if you need to close underlaying file descriptors or any cleanup operations. The goal is to wrap the <code>ogr2ogr</code> IO stream object to something that <code>#response_body=</code> expects.</p>
+
+<h4>Ruby IO Interface</h4>
+
+<p>Ruby <a href="http://www.ruby-doc.org/core-2.1.2/IO.html">IO</a> class already implements <code>#each</code> and <code>#close</code> methods. However the behavior of <code>#each</code> is not ideal in our use case. <code>IO#each</code> is an alias to <code>IO#each_line</code> which yields data line by line. <code>ogr2ogr</code> generates the GeoJSON in a single gigantic line. We need to split each chunk by byte size instead of by line.</p>
+
+<p>Luckily, Ruby IO offers a nice method called <code>#readpartial</code> that takes a <code>maxlen</code> argument. This argument tells the IO stream how many bytes read. When invoked, the IO object will wait until enough bytes are available and return a string with the requested byte size (or less if end of the stream is reached, or raises EOFError).</p>
+
+<h4>Chunking IO Stream</h4>
+
+<p>With the long explanation above, we are now equipped with enough knowledge to create a wrapper to handle the chunking. It turns out pretty simple:</p>
+
+<pre><code class="ruby"># lib/chunked_stream.rb
+
+#
+# ChunkedStream
+#
+# It takes any IO object and reads the output in chunks.
+# It implements #each and #close and is designed to be used
+# to interface with Rails Live Stream or Rack::Chunked
+#
+class ChunkedStream
+  CHUNK_SIZE = 1024 * 4 # read in 4 kB size
+
+  attr_reader :io, :chunk_size
+
+  def initialize(io, chunk_size = CHUNK_SIZE)
+    @io = io
+    @chunk_size = chunk_size
+  end
+
+  def each
+    while chunk = io.readpartial(chunk_size)
+      yield chunk
+    end
+  rescue EOFError =&gt; e
+    nil
+  ensure
+    close
+  end
+
+  def close
+    io.close
+  end
+end
+</code></pre>
+
+<p>Now we have all the Lego pieces in place! let&rsquo;s put them in good use:</p>
+
+<pre><code class="ruby"># In your ActionController::Metal sub class
+# that generate the geojson
+#
+def index
+  scope = Region.all
+
+  io = GeojsonCommand.new(scope).run
+
+  self.status = :ok
+  self.content_type = 'application/json'
+  self.response_body = ChunkedStream.new(io)
+end
+</code></pre>
+
+<h3>Bonus Stage: On The Fly Compression for Chunked Encoding</h3>
+
+<p>Somewhere during the research, I came across <a href="http://robots.thoughtbot.com/content-compression-with-rack-deflater">Rack::Deflater</a>. This is a middleware that checks for <code>Accept-Encoding</code> in request headers, and compresses your response on the fly!</p>
+
+<p>The trick to get it working with <code>Rack::Chunked</code> is to insert this middleware right after <code>Rack::Chunked</code>. This is because we need to compress each data chunk, instead of the entire request.</p>
+
+<p>To enable compression, all you need to do is add the following line in your <code>config/application.rb</code>:</p>
+
+<pre><code class="ruby">config.middleware.insert_after(Rack::Chunked, Rack::Deflater)
+</code></pre>
+
+<h2>Caveats</h2>
+
+<p>Although the speed has been significantly improved. There are still some caveats to watch for.</p>
+
+<h3>ogr2ogr Sub-Process Error Handling</h3>
+
+<p>Currently the code assumes <code>ogr2ogr</code> sub-process can run successfully all the time, and we all know this is unrealistic. A better error handling process is needed to make it more solid.</p>
+
+<h3>Under Large Load</h3>
+
+<p>Under high load, many <code>ogr2ogr</code> sub-processes will be created. The behavior under this situation is unknown. But this is an internal API with very light traffic. Thus this is not a concern for me (yet). I think some kind of in-process worker pool and monitor could mostly solve this issue, but I have no plan to implement this for now.</p>
+
+<h2>Go Try It Out!</h2>
+
+<p>Here is a <a href="https://gist.github.com/aq1018/e3512f763d42ad8cf80b">gist</a> for you to try it out. Let me know your results / opinions / rants! All is welcome!</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,666 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Inspec - Yet Another Javascript BDD Test Framework - AQ</title>
+  <meta name="author" content="Aaron Qian">
+
+  
+  <meta name="description" content="Update: Due to lack of interest and time, Inspec is no longer maintained.
+jSpec has become more complete since this post,
+and I would recommend using &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="AQ" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-8276367-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">AQ</a></h1>
+  
+    <h2>{ ruby: 'awesome', javascript: 'kickass' }</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:aq1018.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Inspec - Yet Another Javascript BDD Test Framework</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-04-13T21:14:00-07:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><em>Update: Due to lack of interest and time, Inspec is no longer maintained.
+<a href="http://visionmedia.github.com/jspec/">jSpec</a> has become more complete since this post,
+and I would recommend using <a href="http://visionmedia.github.com/jspec/">jSpec</a> instead.</em></p>
+
+<h3>The &ldquo;Why&rdquo; Question</h3>
+
+<p>Why? You ask, we already have BDD Frameworks such as<a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a>,
+<a href="http://visionmedia.github.com/jspec/">jSpec</a>, and <a href="http://jania.pe.kr/aw/moin.cgi/JSSpec">JSSepc</a>, you want to make <em>another</em> Javascript BDD Test Framework?</p>
+
+<p>To answer your question, you can take a look at my previous article
+So, please <a href="/blog/2009/04/12/javascript-bdd-test-frameworks-compared">read it</a> if you haven&rsquo;t done so.</p>
+
+<p>Now, if you are still with me after finish reading my article,
+allow me to introduce you a new BDD Test Framework that doesn&rsquo;t suck.</p>
+
+<h2>Introducing <a href="http://github.com/aq1018/inspec/">Inspec</a></h2>
+
+<p>While coding up <a href="http://github.com/aq1018/inspec/">Inspec</a>, I was trying to fulfill the following features:</p>
+
+<ul>
+<li>Nested behaviors.</li>
+<li>Shared behaviors. (aka. <code>it_should_behave_like</code> in <a href="http://rsepc.info">RSepc</a>)</li>
+<li>Framework agnostic. ( You can use it with <a href="http://jquery.com/">jQuery</a>,
+<a href="http://www.prototypejs.org/">Prototype</a>, <a href="http://mootools.net/">Mootools</a>, <a href="http://developer.yahoo.com/yui/">YUI</a>,
+or <a href="http://extjs.com/">ExtJS</a>. it&rsquo;s your choice. )</li>
+<li>An elegent DSL.</li>
+<li>No namespace pollution.</li>
+<li>Able to run in browser, <a href="http://ajaxian.com/archives/johnson-wrapping-javascript-in-a-loving-ruby-embrace-and-arax">command-line</a>, and <a href="http://en.wikipedia.org/wiki/Server-side_JavaScript">server side</a></li>
+<li>A cystal clear API that is easy to understand and extend</li>
+</ul>
+
+
+<p>Sound awesome! But how does it work?</p>
+
+<p>Here is a small example:</p>
+
+<figure class='code'><figcaption><span>some examples on how to use Inspe.</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;Inspec&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should fail&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should be pending&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;with a nested example group&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work as a nested example group&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="kc">false</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// W00t?? It&#39;s nesting a shared example group</span>
+</span><span class='line'>  <span class="nx">itShouldBehaveLike</span><span class="p">(</span><span class="s2">&quot;a shared example group&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">sharedExamplesFor</span><span class="p">(</span><span class="s2">&quot;a shared example group&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work as shared example&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// Yes! Shared nested Example Groups!</span>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;with nested example groups in shared&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work as a nested example group in shared&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is another example that uses more matchers:</p>
+
+<figure class='code'><figcaption><span>example matchers.</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;Matchers&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;TypeMatcher&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with String&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aString</span> <span class="o">=</span> <span class="s2">&quot;abc&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aString</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Number&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aNumber</span> <span class="o">=</span> <span class="mi">123</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aNumber</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;number&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Object&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">anObject</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">anObject</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;object&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Boolean&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aBoolean</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aBoolean</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;boolean&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with undefined&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">undefinedValue</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">undefinedValue</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;undefined&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with function&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aFunction</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){};</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aFunction</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;function&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;InstanceMatcher&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with String&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aString</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">String</span><span class="p">(</span><span class="s2">&quot;abc&quot;</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aString</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nb">String</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Number&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aNumber</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Number</span><span class="p">(</span><span class="mi">123</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aNumber</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nb">Number</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with a class&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">Foo</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){};</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nx">Foo</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with a sub-class&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">Foo</span> <span class="o">=</span> <span class="nx">Inspec</span><span class="p">.</span><span class="nx">Class</span><span class="p">.</span><span class="nx">extend</span><span class="p">({});</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nx">Foo</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nx">Inspec</span><span class="p">.</span><span class="nx">Class</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nb">Object</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;ComparisonMatcher&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeAtLeast&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">toBeAtLeast</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">6</span><span class="p">).</span><span class="nx">toBeAtLeast</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeAtMost&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">toBeAtMost</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">toBeAtMost</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeGreaterThan&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">6</span><span class="p">).</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeLessThan&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">toBeLessThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toBeLessThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;RegexMatcher&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should match correct string&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">emailRegex</span> <span class="o">=</span> <span class="sr">/^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/</span><span class="p">;</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">email</span> <span class="o">=</span> <span class="s2">&quot;abc@efg.com&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">email</span><span class="p">).</span><span class="nx">toMatch</span><span class="p">(</span><span class="nx">emailRegex</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should not match incorrect string&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">emailRegex</span> <span class="o">=</span> <span class="sr">/^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/</span><span class="p">;</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">email</span> <span class="o">=</span> <span class="s2">&quot;abc_efg.com&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">email</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toMatch</span><span class="p">(</span><span class="nx">emailRegex</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>What&rsquo;s working so far</h2>
+
+<p>As this is still an early release
+(Let&rsquo;s see, It is about 3 weeks old so far.
+Let&rsquo;s call it version 0.0.1??),
+most of the core features are already working.
+Here is the list:</p>
+
+<ul>
+<li>Basic Matchers</li>
+<li>Nested describes</li>
+<li>Shared describes</li>
+<li>Sandboxed Example Scope</li>
+<li>Tested to work in FireFox</li>
+<li>Basic HTML Reporter</li>
+<li>Works with &ldquo;Rhino&rdquo;:rhino and &ldquo;Johnson&rdquo;:johnson</li>
+<li>Basic Console Reporter for &ldquo;Rhino&rdquo;:rhino and &ldquo;Johnson&rdquo;:johnson</li>
+</ul>
+
+
+<h2>In The Near Future</h2>
+
+<p>While <a href="http://github.com/aq1018/inspec/">Inspec</a> is now working with basic matchers,
+here are a few things I&rsquo;d like to add:</p>
+
+<ul>
+<li>Better syntax and organization of matchers for easier extensions.
+(Tempted to steal from <a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a>)</li>
+<li>More Matchers. (Makes everyone happy.)</li>
+<li>Work on WScript environment.</li>
+<li>Make sure compatibility with all major browsers. (Helps appricated)</li>
+<li>Allow selective execution of Example groups / Examples.</li>
+<li>Make a better HTML Reporter, that hooks into selective executions.</li>
+<li>Better Documentations. (Helps appricated)</li>
+<li>Better Error messages on Failure and Exception.</li>
+<li>Package and maybe minify(why not?).</li>
+<li>A LOT more rigid and concrete tests to reach 100% coverage.
+(Also serve as uage examples, helps appricated)</li>
+</ul>
+
+
+<h2>For Developers</h2>
+
+<p>I have been very busy with my date job lately,
+and never have enough time to work on my own projects.
+Any help is very much appricated. So if you are interested in developing <a href="http://github.com/aq1018/inspec/">Inspec</a>
+together, just <a href="http://github.com/aq1018/inspec/">fork me</a>,make some improvements, rebase, push,
+and shoot me a pull request. If you are a regular contributor,
+your name will be in the co-author&rsquo;s list as well.</p>
+
+<h2>Suggestions? Comments?</h2>
+
+<p>While I primarily developed this for my own need.
+I hope this will benefit everyone who has similiar needs.
+So your suggestions and critics are very welcome.
+Tell me what you like about it, what you don&rsquo;t like about it,
+and how <a href="http://github.com/aq1018/inspec/">Inspec</a> can be improved. Sorry that there is nothing
+like google group or irc or mailing list setup yet. You can leave a
+comment here, and I will be notified automatically through email.
+If this project grows bigger, I will setup a google group and an irc channel.
+But for now, you can either leave a comment, or scroll down to the bottom
+of the page, and my contact information is on the lower right.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Aaron Qian</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2009-04-13T21:14:00-07:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/bdd/'>bdd</a>, <a class='category' href='/blog/categories/inspec/'>inspec</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/" data-via="aq1018" data-counturl="http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2009/04/12/javascript-bdd-test-frameworks-compared/" title="Previous Post: Javascript BDD Test Frameworks Compared">&laquo; Javascript BDD Test Frameworks Compared</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/" title="Next Post: Updates on Inspec - Javascript BDD Framework">Updates on Inspec - Javascript BDD Framework &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section class="about">
+  <h1>
+    <a href="/about">
+      <img src="http://www.gravatar.com/avatar/d2d5c5e3d38f94fb0dcdd78749064479?s=140" alt="Gravatar of Aaron Qian " title="Gravatar of Aaron Qian" />
+      <p>Me</p>
+    </a>
+  </h1>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/">Streaming GeoJSON With GDAL, Rack::Chunked, and Rails Live Streaming</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/">Dm-is-slug 0.10.2 Now on GemCutter</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/">Updates on Inspec - Javascript BDD Framework</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/">Inspec - Yet Another Javascript BDD Test Framework</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/aq1018">@aq1018</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'aq1018',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/aq1018?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Aaron Qian -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'aq1018';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/';
+        var disqus_url = 'http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
