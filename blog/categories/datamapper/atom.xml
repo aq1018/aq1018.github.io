@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: datamapper | AQ]]></title>
+  <link href="http://aq1018.github.io/blog/categories/datamapper/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2015-07-09T03:20:59-07:00</updated>
+  <id>http://aq1018.github.io/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[dm-is-slug 0.10.2 Now on GemCutter]]></title>
+    <link href="http://aq1018.github.io/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/"/>
+    <updated>2010-02-08T22:05:00-08:00</updated>
+    <id>http://aq1018.github.io/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter</id>
+    <content type="html"><![CDATA[<p>I created a <a href="http://datamapper.org">datamapper</a> plugin called
+<a href="http://github.com/aq1018/dm-is-slug">dm-is-slug</a> in 2009 to
+ease the pain of handling permalinks or url slugs in my
+<a href="http://www.merbivore.com%20project">merb</a>.</p>
+
+<p>So, I spent some time merging commits from <a href="http://github.com/cheba">Alex Mankuta</a>
+whom has fixed many bugs, and now it works much better. Thanks, cheba!</p>
+
+<p>I also added support for <a href="http://rubyforge.org/projects/unidecode/">unidecoding</a>,
+which allows you to turn strings like <em>&ldquo;你好&rdquo;</em> into <em>&ldquo;ni-hao&rdquo;</em>.</p>
+
+<p>Lastly, the gem is pushed to <a href="http://gemcutter.org">gemcutter</a>
+for easy gem install. That didn&rsquo;t take too long! :)</p>
+
+<p><strong><a href="http://github.com/aq1018/dm-is-slug">Find out how to use dm-is-slug on github!</a></strong></p>
+]]></content>
+  </entry>
+  
+</feed>
