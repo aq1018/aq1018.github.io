@@ -31,7 +31,156 @@ by calling <code>view.remove()</code>? Are you sure didn&rsquo;t even miss one o
 will monitor the life cycle of every <code>Backbone.View</code> and report any possible
 leaky views periodically to your browser console screen.</p>
 
-<p>{% gist bca960d6124a76db63d0 leaky-registry.js %}</p>
+<p><div><script src='https://gist.github.com/bca960d6124a76db63d0.js?file=leaky-registry.js'></script>
+<noscript><pre><code>/*globals $*/
+
+var _ = require(&#39;underscore&#39;);
+
+function LeakyRegistry(options) {
+  this.initialize(options);
+}
+
+LeakyRegistry.DEFAULT_OPTIONS = {
+  interval: 5000,
+  gc: false
+};
+
+_.extend(LeakyRegistry.prototype, {
+
+  constructor: LeakyRegistry,
+
+  initialize: function(options) {
+    _.extend(this, this.sanitizeOptions(options));
+    this.interval = 5000;
+    this.clear();
+    console.warn(&#39;**** LeakyRegistery - Your best pal for backbone view memory leak detection. ****&#39;);
+  },
+
+  sanitizeOptions: function(options) {
+    var defaultOptions = LeakyRegistry.DEFAULT_OPTIONS;
+    options = _.pick(options || {}, &#39;interval&#39;, &#39;gc&#39;);
+    return _.extend({}, defaultOptions, options);
+  },
+
+  start: function() {
+    this._handle = setInterval(this.reportLeaks.bind(this), this.interval);
+  },
+
+  get: function(cid) {
+    return this.views[cid];
+  },
+
+  register: function(view) {
+    if (this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is already registerd!&#39;);
+      return;
+    }
+
+    this.views[view.cid] = view;
+  },
+
+  unregister: function(view) {
+    if (!this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is not registerd!&#39;);
+      return;
+    }
+
+    delete this.views[view.cid];
+  },
+
+  reportLeaks: function() {
+    console.log(&#39;checking leaky views&#39;);
+    _.each(this.views, function(view) {
+      view.__warnIfLeaky();
+    });
+
+    if (this.gc) {
+      this.gc();
+    }
+  },
+
+  clear: function() {
+    this.views = {};
+  },
+
+  stop: function() {
+    clearInterval(this._handle);
+  },
+
+  gc: function() {
+    _.each(this.views, function(view) {
+      if (view.__isLeaky()) {
+        view.remove();
+      }
+    });
+  },
+
+  dispose: function() {
+    this.stop();
+    this.clear();
+  }
+});
+
+var leakyRegistry = global.leakyRegistry = window.leakyRegistry = new LeakyRegistry();
+
+
+var Backbone = require(&#39;backbone&#39;);
+
+function intercept(fn, after) {
+  return function() {
+    var val = fn.apply(this, arguments);
+    after.apply(this);
+    return val;
+  };
+}
+
+// instrument Backbone.View#_configure
+// since we cannot override the constructor itself
+// the #_configure method invoked by the constructor is our next best choice
+Backbone.View.prototype._configure = intercept(Backbone.View.prototype._configure, function() {
+  leakyRegistry.register(this);
+});
+
+Backbone.View.prototype.remove = intercept(Backbone.View.prototype.remove, function() {
+  this.__gced = true;
+  console.trace(&#39;[&#39; + this.cid + &#39;] removed.&#39;, this);
+  leakyRegistry.unregister(this);
+});
+
+Backbone.View.prototype.__warnIfLeaky = function() {
+  if (this.__isLeaky()) {
+    console.warn(&#39;[&#39; + this.cid + &#39;] is leaky.&#39;, this.el, this);
+  }
+
+  if(this.__isOnScreen()) {
+    console.debug(&#39;[&#39; + this.cid + &#39;] still on screen.&#39;, this.el, this);
+  }
+};
+
+Backbone.View.prototype.__isOnScreen = function() {
+  return $.contains(document, this.el);
+};
+
+Backbone.View.prototype.__isLeaky = function() {
+  // gc&#39;ed already
+  if(this.__gced) {
+    return false;
+  }
+
+  // not gc&#39;ed, but still attached to dom
+  if (this.__isOnScreen()) {
+    return false;
+  }
+
+  // not gc&#39;ed and not on dom
+  // we think this might be a leaky view
+  return true;
+};
+
+leakyRegistry.start();
+
+</code></pre></noscript></div>
+</p>
 
 <p>Look Ma, No leaks!</p>
 ]]></content>

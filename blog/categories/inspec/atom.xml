@@ -54,150 +54,287 @@ or <a href="http://extjs.com/">ExtJS</a>. it&rsquo;s your choice. )</li>
 
 <p>Here is a small example:</p>
 
-<p>{%codeblock some examples on how to use Inspe. lang:js%}
-describe(&ldquo;Inspec&rdquo;, function(){</p>
-
-<p>  it(&ldquo;should work&rdquo;, function(){
-    expect(true).toBeTrue();
-  })</p>
-
-<p>  it(&ldquo;should fail&rdquo;, function(){
-    expect(true).not().toBeTrue();
-  })</p>
-
-<p>  it(&ldquo;should be pending&rdquo;)</p>
-
-<p>  describe(&ldquo;with a nested example group&rdquo;, function(){  <br/>
-    it(&ldquo;should work as a nested example group&rdquo;, function(){
-      expect(false).toBe(false);
-    })
-  })</p>
-
-<p>  // W00t?? It&rsquo;s nesting a shared example group
-  itShouldBehaveLike(&ldquo;a shared example group&rdquo;);
-})</p>
-
-<p>sharedExamplesFor(&ldquo;a shared example group&rdquo;, function(){
-  it(&ldquo;should work as shared example&rdquo;, function(){
-    expect(true).toBeTrue();
-  })</p>
-
-<p>  // Yes! Shared nested Example Groups!
-  describe(&ldquo;with nested example groups in shared&rdquo;, function(){
-    it(&ldquo;should work as a nested example group in shared&rdquo;, function(){
-      expect(true).toBeTrue();
-    })
-  })
-})
-{%endcodeblock%}</p>
+<p><figure class='code'><figcaption><span>some examples on how to use Inspe.</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">Inspec</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">fail</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">be</span> <span class="nx">pending</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;)</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="kd">with</span> <span class="nx">a</span> <span class="nx">nested</span> <span class="nx">example</span> <span class="nx">group</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>  <span class="o">&lt;</span><span class="nx">br</span><span class="o">/&gt;</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span> <span class="nx">as</span> <span class="nx">a</span> <span class="nx">nested</span> <span class="nx">example</span> <span class="nx">group</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="kc">false</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="c1">// W00t?? It&amp;rsquo;s nesting a shared example group</span>
+</span><span class='line'>  <span class="nx">itShouldBehaveLike</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">a</span> <span class="nx">shared</span> <span class="nx">example</span> <span class="nx">group</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;);</span>
+</span><span class='line'><span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">sharedExamplesFor</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">a</span> <span class="nx">shared</span> <span class="nx">example</span> <span class="nx">group</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span> <span class="nx">as</span> <span class="nx">shared</span> <span class="nx">example</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="c1">// Yes! Shared nested Example Groups!</span>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="kd">with</span> <span class="nx">nested</span> <span class="nx">example</span> <span class="nx">groups</span> <span class="k">in</span> <span class="nx">shared</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span> <span class="nx">as</span> <span class="nx">a</span> <span class="nx">nested</span> <span class="nx">example</span> <span class="nx">group</span> <span class="k">in</span> <span class="nx">shared</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span><span class="nx">toBeTrue</span><span class="p">();</span>
+</span><span class='line'>    <span class="p">})</span>
+</span><span class='line'>  <span class="p">})</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>Here is another example that uses more matchers:</p>
 
-<p>{%codeblock example matchers. lang:js%}
-describe(&ldquo;Matchers&rdquo;, function(){
-  describe(&ldquo;TypeMatcher&rdquo;, function(){
-    it(&ldquo;should work with String&rdquo;, function(){
-      var aString = &ldquo;abc&rdquo;;
-      expect(aString).toBeType(&ldquo;string&rdquo;);
-    })</p>
-
-<pre><code>it("should work with Number", function(){
-  var aNumber = 123;
-  expect(aNumber).toBeType("number");
-})
-
-it("should work with Object", function(){
-  var anObject = {};
-  expect(anObject).toBeType("object");
-})
-
-it("should work with Boolean", function(){
-  var aBoolean = false;
-  expect(aBoolean).toBeType("boolean");
-})
-
-it("should work with undefined", function(){
-  var undefinedValue;
-  expect(undefinedValue).toBeType("undefined");
-})
-
-it("should work with function", function(){
-  var aFunction = function(){};
-  expect(aFunction).toBeType("function");
-})
-</code></pre>
-
-<p>  })</p>
-
-<p>  describe(&ldquo;InstanceMatcher&rdquo;, function(){
-    it(&ldquo;should work with String&rdquo;, function(){
-      var aString = new String(&ldquo;abc&rdquo;);
-      expect(aString).toBeA(String);
-    })</p>
-
-<pre><code>it("should work with Number", function(){
-  var aNumber = new Number(123);
-  expect(aNumber).toBeA(Number);
-})
-
-it("should work with a class", function(){
-  var Foo = function(){};
-  var foo = new Foo();
-  expect(foo).toBeA(Foo);
-})
-
-it("should work with a sub-class", function(){
-  var Foo = Inspec.Class.extend({});
-  var foo = new Foo();
-  expect(foo).toBeA(Foo);
-  expect(foo).toBeA(Inspec.Class);
-  expect(foo).toBeA(Object);
-})
-</code></pre>
-
-<p>  })</p>
-
-<p>  describe(&ldquo;ComparisonMatcher&rdquo;, function(){
-    it(&ldquo;should work with toBeAtLeast&rdquo;, function(){
-      expect(5).toBeAtLeast(5);
-      expect(6).toBeAtLeast(5);
-    })</p>
-
-<pre><code>it("should work with toBeAtMost", function(){
-  expect(4).toBeAtMost(5);
-  expect(5).toBeAtMost(5);
-})
-
-it("should work with toBeGreaterThan", function(){
-  expect(6).toBeGreaterThan(5);
-  expect(5).not().toBeGreaterThan(5);
-})
-
-it("should work with toBeLessThan", function(){
-  expect(4).toBeLessThan(5);
-  expect(5).not().toBeLessThan(5);
-})
-</code></pre>
-
-<p>  })</p>
-
-<p>  describe(&ldquo;RegexMatcher&rdquo;, function(){
-    it(&ldquo;should match correct string&rdquo;, function(){
-      var emailRegex = /^(<a href="[-.\w]*[0-9a-zA-Z]">0-9a-zA-Z</a><em>@([0-9a-zA-Z][-\w]</em>[0-9a-zA-Z].)+[a-zA-Z]{2,9})$/;
-      var email = &ldquo;<a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#x3a;&#97;&#98;&#x63;&#x40;&#x65;&#x66;&#103;&#46;&#99;&#x6f;&#109;">&#97;&#x62;&#x63;&#x40;&#x65;&#102;&#103;&#46;&#99;&#111;&#109;</a>&rdquo;;
-      expect(email).toMatch(emailRegex);
-    })</p>
-
-<pre><code>it("should not match incorrect string", function(){
-  var emailRegex = /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
-  var email = "abc_efg.com";
-  expect(email).not().toMatch(emailRegex);
-})
-</code></pre>
-
-<p>  })
-})
-{%endcodeblock%}</p>
+<p><figure class='code'><figcaption><span>example matchers.</span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">Matchers</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">TypeMatcher</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span> <span class="kd">with</span> <span class="nb">String</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aString</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">abc</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aString</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">string</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;);</span>
+</span><span class='line'>    <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">pre</span><span class="o">&gt;&lt;</span><span class="nx">code</span><span class="o">&gt;</span><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Number&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">aNumber</span> <span class="o">=</span> <span class="mi">123</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">aNumber</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;number&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Object&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">anObject</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">anObject</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;object&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Boolean&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">aBoolean</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">aBoolean</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;boolean&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with undefined&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">undefinedValue</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">undefinedValue</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;undefined&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with function&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">aFunction</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){};</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">aFunction</span><span class="p">).</span><span class="nx">toBeType</span><span class="p">(</span><span class="s2">&quot;function&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">InstanceMatcher</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span> <span class="kd">with</span> <span class="nb">String</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">aString</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">String</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">abc</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">aString</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nb">String</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">pre</span><span class="o">&gt;&lt;</span><span class="nx">code</span><span class="o">&gt;</span><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with Number&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">aNumber</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Number</span><span class="p">(</span><span class="mi">123</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">aNumber</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nb">Number</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with a class&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">Foo</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){};</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nx">Foo</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with a sub-class&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">Foo</span> <span class="o">=</span> <span class="nx">Inspec</span><span class="p">.</span><span class="nx">Class</span><span class="p">.</span><span class="nx">extend</span><span class="p">({});</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">foo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Foo</span><span class="p">();</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nx">Foo</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nx">Inspec</span><span class="p">.</span><span class="nx">Class</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">foo</span><span class="p">).</span><span class="nx">toBeA</span><span class="p">(</span><span class="nb">Object</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">ComparisonMatcher</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">work</span> <span class="kd">with</span> <span class="nx">toBeAtLeast</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">toBeAtLeast</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="mi">6</span><span class="p">).</span><span class="nx">toBeAtLeast</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">pre</span><span class="o">&gt;&lt;</span><span class="nx">code</span><span class="o">&gt;</span><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeAtMost&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">toBeAtMost</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">toBeAtMost</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeGreaterThan&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="mi">6</span><span class="p">).</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should work with toBeLessThan&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="mi">4</span><span class="p">).</span><span class="nx">toBeLessThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="mi">5</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toBeLessThan</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="nx">describe</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">RegexMatcher</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">it</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">should</span> <span class="nx">match</span> <span class="nx">correct</span> <span class="nx">string</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">emailRegex</span> <span class="o">=</span> <span class="err">/^(&lt;a href=&quot;[-.\w]*[0-9a-zA-Z]&quot;&gt;0-9a-zA-Z&lt;/a&gt;&lt;em&gt;@([0-9a-zA-Z][-\w]&lt;/em&gt;[0-9a-zA-Z].)+[a-zA-Z]{2,9})$/;</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">email</span> <span class="o">=</span> <span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="o">&lt;</span><span class="nx">a</span> <span class="nx">href</span><span class="o">=</span><span class="s2">&quot;&amp;#x6d;&amp;#x61;&amp;#x69;&amp;#108;&amp;#116;&amp;#111;&amp;#x3a;&amp;#x61;&amp;#x62;&amp;#x63;&amp;#64;&amp;#x65;&amp;#x66;&amp;#x67;&amp;#46;&amp;#x63;&amp;#x6f;&amp;#109;&quot;</span><span class="o">&gt;&amp;</span><span class="err">#</span><span class="mi">97</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="mi">98</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x63</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x40</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x65</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x66</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x67</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x2e</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x63</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x6f</span><span class="p">;</span><span class="o">&amp;</span><span class="err">#</span><span class="nx">x6d</span><span class="p">;</span><span class="o">&lt;</span><span class="err">/a&gt;&amp;rdquo;;</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">email</span><span class="p">).</span><span class="nx">toMatch</span><span class="p">(</span><span class="nx">emailRegex</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">})</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">pre</span><span class="o">&gt;&lt;</span><span class="nx">code</span><span class="o">&gt;</span><span class="nx">it</span><span class="p">(</span><span class="s2">&quot;should not match incorrect string&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">emailRegex</span> <span class="o">=</span> <span class="sr">/^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/</span><span class="p">;</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">email</span> <span class="o">=</span> <span class="s2">&quot;abc_efg.com&quot;</span><span class="p">;</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">email</span><span class="p">).</span><span class="nx">not</span><span class="p">().</span><span class="nx">toMatch</span><span class="p">(</span><span class="nx">emailRegex</span><span class="p">);</span>
+</span><span class='line'><span class="p">})</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="p">})</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <h2>What&rsquo;s working so far</h2>
 
