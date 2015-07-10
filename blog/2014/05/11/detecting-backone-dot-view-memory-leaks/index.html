@@ -1,0 +1,464 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Detecting Backone.View Memory Leaks - AQ</title>
+  <meta name="author" content="Aaron Qian">
+
+  
+  <meta name="description" content="Edit: I have packaged it into
+backbone.leakchecker. Happy leak hunting! Do you think you write good Backbone.js code? Are you sure your view is not &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="AQ" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-8276367-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">AQ</a></h1>
+  
+    <h2>Input Code Ouput Code</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:aq1018.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Detecting Backone.View Memory Leaks</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-11T22:09:38-07:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><strong>Edit</strong>: I have packaged it into
+<a href="https://github.com/aq1018/Backbone.LeakChecker">backbone.leakchecker</a>. Happy leak hunting!</p>
+
+<p>Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your views
+by calling <code>view.remove()</code>? Are you sure didn&rsquo;t even miss one of them?</p>
+
+<p>No worries, I&rsquo;ve got your back. : )</p>
+
+<p>Just include <code>leaky-registry.js</code> before you load and initialize your Backbone app. It
+will monitor the life cycle of every <code>Backbone.View</code> and report any possible
+leaky views periodically to your browser console screen.</p>
+
+<div><script src='https://gist.github.com/bca960d6124a76db63d0.js?file=leaky-registry.js'></script>
+<noscript><pre><code>/*globals $*/
+
+var _ = require(&#39;underscore&#39;);
+
+function LeakyRegistry(options) {
+  this.initialize(options);
+}
+
+LeakyRegistry.DEFAULT_OPTIONS = {
+  interval: 5000,
+  gc: false
+};
+
+_.extend(LeakyRegistry.prototype, {
+
+  constructor: LeakyRegistry,
+
+  initialize: function(options) {
+    _.extend(this, this.sanitizeOptions(options));
+    this.interval = 5000;
+    this.clear();
+    console.warn(&#39;**** LeakyRegistery - Your best pal for backbone view memory leak detection. ****&#39;);
+  },
+
+  sanitizeOptions: function(options) {
+    var defaultOptions = LeakyRegistry.DEFAULT_OPTIONS;
+    options = _.pick(options || {}, &#39;interval&#39;, &#39;gc&#39;);
+    return _.extend({}, defaultOptions, options);
+  },
+
+  start: function() {
+    this._handle = setInterval(this.reportLeaks.bind(this), this.interval);
+  },
+
+  get: function(cid) {
+    return this.views[cid];
+  },
+
+  register: function(view) {
+    if (this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is already registerd!&#39;);
+      return;
+    }
+
+    this.views[view.cid] = view;
+  },
+
+  unregister: function(view) {
+    if (!this.views[view.cid]) {
+      console.error(&#39;View&#39; + view.cid + &#39;is not registerd!&#39;);
+      return;
+    }
+
+    delete this.views[view.cid];
+  },
+
+  reportLeaks: function() {
+    console.log(&#39;checking leaky views&#39;);
+    _.each(this.views, function(view) {
+      view.__warnIfLeaky();
+    });
+
+    if (this.gc) {
+      this.gc();
+    }
+  },
+
+  clear: function() {
+    this.views = {};
+  },
+
+  stop: function() {
+    clearInterval(this._handle);
+  },
+
+  gc: function() {
+    _.each(this.views, function(view) {
+      if (view.__isLeaky()) {
+        view.remove();
+      }
+    });
+  },
+
+  dispose: function() {
+    this.stop();
+    this.clear();
+  }
+});
+
+var leakyRegistry = global.leakyRegistry = window.leakyRegistry = new LeakyRegistry();
+
+
+var Backbone = require(&#39;backbone&#39;);
+
+function intercept(fn, after) {
+  return function() {
+    var val = fn.apply(this, arguments);
+    after.apply(this);
+    return val;
+  };
+}
+
+// instrument Backbone.View#_configure
+// since we cannot override the constructor itself
+// the #_configure method invoked by the constructor is our next best choice
+Backbone.View.prototype._configure = intercept(Backbone.View.prototype._configure, function() {
+  leakyRegistry.register(this);
+});
+
+Backbone.View.prototype.remove = intercept(Backbone.View.prototype.remove, function() {
+  this.__gced = true;
+  console.trace(&#39;[&#39; + this.cid + &#39;] removed.&#39;, this);
+  leakyRegistry.unregister(this);
+});
+
+Backbone.View.prototype.__warnIfLeaky = function() {
+  if (this.__isLeaky()) {
+    console.warn(&#39;[&#39; + this.cid + &#39;] is leaky.&#39;, this.el, this);
+  }
+
+  if(this.__isOnScreen()) {
+    console.debug(&#39;[&#39; + this.cid + &#39;] still on screen.&#39;, this.el, this);
+  }
+};
+
+Backbone.View.prototype.__isOnScreen = function() {
+  return $.contains(document, this.el);
+};
+
+Backbone.View.prototype.__isLeaky = function() {
+  // gc&#39;ed already
+  if(this.__gced) {
+    return false;
+  }
+
+  // not gc&#39;ed, but still attached to dom
+  if (this.__isOnScreen()) {
+    return false;
+  }
+
+  // not gc&#39;ed and not on dom
+  // we think this might be a leaky view
+  return true;
+};
+
+leakyRegistry.start();
+
+</code></pre></noscript></div>
+
+
+<p>Look Ma, No leaks!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Aaron Qian</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-11T22:09:38-07:00" pubdate data-updated="true"></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/backbone/'>backbone</a>, <a class='category' href='/blog/categories/javascript/'>javascript</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/" data-via="aq1018" data-counturl="http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/" title="Previous Post: dm-is-slug 0.10.2 Now on GemCutter">&laquo; dm-is-slug 0.10.2 Now on GemCutter</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/" title="Next Post: Streaming GeoJSON with GDAL, Rack::Chunked, and Rails Live Streaming">Streaming GeoJSON with GDAL, Rack::Chunked, and Rails Live Streaming &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section class="about">
+  <h1>
+    <a href="/about">
+      <img src="http://www.gravatar.com/avatar/d2d5c5e3d38f94fb0dcdd78749064479?s=140" alt="Gravatar of Aaron Qian " title="Gravatar of Aaron Qian" />
+      <p>Me</p>
+    </a>
+  </h1>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/07/10/learning-golang/">Learning Golang</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/">Streaming GeoJSON With GDAL, Rack::Chunked, and Rails Live Streaming</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/">Detecting Backone.View Memory Leaks</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/">Dm-is-slug 0.10.2 Now on GemCutter</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2009/04/24/updates-on-inspec-javascript-bdd-framework/">Updates on Inspec - Javascript BDD Framework</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/aq1018">@aq1018</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'aq1018',
+            count: 10,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+<section class="googleplus">
+  <h1>
+    <a href="https://plus.google.com/aq1018?rel=author">
+      <img src="http://www.google.com/images/icons/ui/gprofile_button-32.png" width="32" height="32">
+      Google+
+    </a>
+  </h1>
+</section>
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Aaron Qian -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'aq1018';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/';
+        var disqus_url = 'http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

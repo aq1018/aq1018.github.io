@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | AQ]]></title>
+  <link href="http://aq1018.github.io/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2015-07-10T02:16:45-07:00</updated>
+  <id>http://aq1018.github.io/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Streaming GeoJSON with GDAL, Rack::Chunked, and Rails Live Streaming]]></title>
+    <link href="http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming/"/>
+    <updated>2014-08-22T22:02:45-07:00</updated>
+    <id>http://aq1018.github.io/blog/2014/08/22/streaming-geojson-with-gdal-rack-chunked-and-rails-live-streaming</id>
+    <content type="html"><![CDATA[<h2>TL;DR</h2>
+
+<p>For you busy folks who just want it to work, here is the <a href="https://gist.github.com/aq1018/e3512f763d42ad8cf80b">gist</a>.</p>
+
+<h2>Background</h2>
+
+<p>A few weeks ago, I was at <a href="http://nationbuilder.com/">NationBuilder</a> building a <a href="http://geojson.org/">GeoJSON</a> API for organizers. The end goal for this project is to provide accurate political districting information through this API and exposes a map management interface for district updates.</p>
+
+<h2>Application Architecture</h2>
+
+<p>This application is built on top of the popular <a href="http://rubyonrails.org/">Ruby On Rails</a> framework, and uses <a href="http://postgis.net/">PostGIS</a> as geographic data storage backend. GeoJSON conversion is done by using <a href="https://github.com/rgeo/rgeo-geojson">rgeo-geojson</a> gem since it fits nicely with <a href="https://github.com/rgeo/activerecord-postgis-adapter">activerecord-postgis-adapter</a>.</p>
+
+<h2>Performance Issues</h2>
+
+<p>The application was initially running smoothly, but problems started to emerge when the generated GeoJSON data became larger over time. The API server would often time out, stop responding, or run out of memory when GeoJSON response size approached a couple MB under light load. As a result, map rendering became so slow and unstable, it was painful to use.</p>
+
+<h3>Memory Bloat</h3>
+
+<p>Our GeoJSON data was initially loaded from database by ActiveReocrd, and then converted into <code>RGeo::Geometry</code> objects. The entire dataset is buffered in memory. These objects are then converted into hashes with <code>rgeo-geojson</code>. These converted hashes represents takes up a lot of memory as well. Finally the resulting hashes are merged with other database properties and pushed on an array. All buffered in memory!</p>
+
+<h3>Response Time</h3>
+
+<p>The application spends the majority of its time converting <code>RGeo::Geometry</code> objects into GeoJSON hashes. The CPU will hit 100% and memory will steadily clime. Upon closer inspection, I found out that <code>rgeo-geojson</code> gem does the conversion entirely in Ruby! When the dataset gets too big, the browser or our proxy will either run out of patience and issue timeouts or our application process will have consumed so much memory it was killed by <a href="http://mmonit.com/monit/">monit</a>.</p>
+
+<h3>Understanding Root Cause</h3>
+
+<p>As all seasoned software engineers would do, I first analyzed the symptoms at hand and concluded the following root cause:</p>
+
+<ul>
+<li>GeoJSON rendering is too slow.</li>
+<li>dataset buffering causes memory bloat.</li>
+</ul>
+
+
+<h2>Research, Research, Research!</h2>
+
+<p>My initial effort was focused on solving the rendering speed issue. I know I cannot convert GeoJSON in ruby since ruby isn&rsquo;t exactly suitable for this kind of heavy duty data crunching when speed is a core requirement.</p>
+
+<h3>The PostGIS route</h3>
+
+<p>The immediate thought came to mind is to have PostGIS generating the GeoJSON for me, and I found out <a href="http://postgis.org/docs/ST_AsGeoJSON.html">st_asgeojson</a>. However, this doesn&rsquo;t solve my problem since I will have to convert the generated GeoJSON back into hashes and merge database properties. There&rsquo;s gotta be a better way!</p>
+
+<h3>GDAL</h3>
+
+<p>After some more research I found out a little commandline tool called <code>ogr2ogr</code> from the wonderful <a href="http://www.gdal.org/">GDAL</a> library. This tool can execute supplied SQL statements and convert the results into GeoJSON FeatureCollection. This is perfect!</p>
+
+<p>Here is an example on how to use it:</p>
+
+<pre><code>ogr2ogr -f GeoJSON /vsistdout/ \
+  "PG:host=&lt;host&gt; dbname=&lt;dbname&gt; user=&lt;user&gt; password=&lt;password&gt;" \
+  -sql "SELECT name, geom FROM regions LIMIT 100"
+</code></pre>
+
+<p>The <code>-f</code> flag indicates the output format, in this case I used GeoJSON. <code>/vsistdout/</code> means I want to output the geojson directly to STDOUT.</p>
+
+<p>I gave it a spin, and the rendering speed is blazing fast! Ok, I&rsquo;m sticking with it!</p>
+
+<h3>Interfacing with Rails</h3>
+
+<p>In order to construct the command, I need to convert an ActiveRecord Scope into SQL statements.</p>
+
+<h3>SQL Statement</h3>
+
+<p>This is easy enough. <code>#to_sql</code> method on ActiveRecord scope will do the trick. If you are using Rails 4, don&rsquo;t forget to wrap this method inside <code>scope.connection.unprepared_statement</code> block to generate the full statement.</p>
+
+<p>Something simple like this would do:</p>
+
+<pre><code class="ruby">def sql
+  @scope.connection.unprepared_statement { @scope.to_sql }
+end
+</code></pre>
+
+<h3>DB Connection String</h3>
+
+<p>The next step is to fetch the Rails database configuration and convert it into the db connection string expected by <code>ogr2ogr</code>. Here is a snippet:</p>
+
+<pre><code class="ruby">def conn_str
+  db_config = Rails.configuration.database_configuration[Rails.env]
+
+  host      = db_config['host']
+  port      = db_config['port']
+  database  = db_config['database']
+  username  = db_config['username']
+  password  = db_config['password']
+
+  args = []
+
+  args.push "host=#{host}" if host
+  args.push "port=#{port}" if port
+  args.push "dbname=#{database}" if database
+  args.push "user=#{username}" if username
+  args.push "password=#{password}" if password
+
+  "PG:\"#{args.join(' ')}\""
+end
+</code></pre>
+
+<h3>Stitching It Togther</h3>
+
+<p>The entire command is constructed as follows:</p>
+
+<pre><code class="ruby">def command
+  [
+    # the command name
+    'ogr2ogr',
+
+    # output geojson to stdout
+    '-f', 'GeoJSON', '/vsistdout/',
+
+    # postgres db config
+    conn_str,
+
+    # SQL statement to run
+    '-sql', "\"#{sql}\""
+  ].join(' ')
+end
+</code></pre>
+
+<h3>Running the command</h3>
+
+<p>Run the generated command as a sub-process and get the STDOUT as an IO object.</p>
+
+<pre><code class="ruby">def run
+  IO.popen(command)
+end
+</code></pre>
+
+<p>Yay! Fast GeoJSON rendering!</p>
+
+<h2>Rails Live Streaming</h2>
+
+<p>You can read to the end of the IO stream and just send it off, but where is the fun? Let&rsquo;s stream the response back with HTTP 1.1 chunked encoding in a 4KB buffer! This improves response time and reduces memory footprint. Sweet deal!</p>
+
+<h3>Add Chunked Enocding Support to Rails</h3>
+
+<p>In order to support chunked encoding, we need to add this into our <code>config/application.rb</code> file:</p>
+
+<pre><code class="ruby"># config/application.rb
+module MyApp
+  class Application
+
+    #
+    # other rails application configurations
+    #
+    # ...
+
+    # Add Rack::Chunked before Rack::Sendfile
+    config.middleware.insert_before(Rack::Sendfile, Rack::Chunked)
+  end
+end
+</code></pre>
+
+<p>This inserts the <code>Rack::Chunked</code> middleware into the correct position of Rails middleware stack to support HTTP 1.1 chunked encoding.</p>
+
+<h3>Aligning The Stars, Er&hellip; I mean Interfaces</h3>
+
+<h4>ActionController::Metal Streaming Interface</h4>
+
+<p>Since I was building an API, I used <code>ActionController::Metal</code> instead of <code>ActionController::Base</code> with is a much smaller abstraction for <code>Rack</code> interface. The response body is set by using <code>#response_body=</code> method.</p>
+
+<p>In order to use chunked encoding, We need to give <code>#response_body=</code> method an object that responds to <code>#each</code> and optionally <code>#close</code>, where <code>#each</code> will yield data in chunks, and <code>#close</code> is required if you need to close underlaying file descriptors or any cleanup operations. The goal is to wrap the <code>ogr2ogr</code> IO stream object to something that <code>#response_body=</code> expects.</p>
+
+<h4>Ruby IO Interface</h4>
+
+<p>Ruby <a href="http://www.ruby-doc.org/core-2.1.2/IO.html">IO</a> class already implements <code>#each</code> and <code>#close</code> methods. However the behavior of <code>#each</code> is not ideal in our use case. <code>IO#each</code> is an alias to <code>IO#each_line</code> which yields data line by line. <code>ogr2ogr</code> generates the GeoJSON in a single gigantic line. We need to split each chunk by byte size instead of by line.</p>
+
+<p>Luckily, Ruby IO offers a nice method called <code>#readpartial</code> that takes a <code>maxlen</code> argument. This argument tells the IO stream how many bytes read. When invoked, the IO object will wait until enough bytes are available and return a string with the requested byte size (or less if end of the stream is reached, or raises EOFError).</p>
+
+<h4>Chunking IO Stream</h4>
+
+<p>With the long explanation above, we are now equipped with enough knowledge to create a wrapper to handle the chunking. It turns out pretty simple:</p>
+
+<pre><code class="ruby"># lib/chunked_stream.rb
+
+#
+# ChunkedStream
+#
+# It takes any IO object and reads the output in chunks.
+# It implements #each and #close and is designed to be used
+# to interface with Rails Live Stream or Rack::Chunked
+#
+class ChunkedStream
+  CHUNK_SIZE = 1024 * 4 # read in 4 kB size
+
+  attr_reader :io, :chunk_size
+
+  def initialize(io, chunk_size = CHUNK_SIZE)
+    @io = io
+    @chunk_size = chunk_size
+  end
+
+  def each
+    while chunk = io.readpartial(chunk_size)
+      yield chunk
+    end
+  rescue EOFError =&gt; e
+    nil
+  ensure
+    close
+  end
+
+  def close
+    io.close
+  end
+end
+</code></pre>
+
+<p>Now we have all the Lego pieces in place! let&rsquo;s put them in good use:</p>
+
+<pre><code class="ruby"># In your ActionController::Metal sub class
+# that generate the geojson
+#
+def index
+  scope = Region.all
+
+  io = GeojsonCommand.new(scope).run
+
+  self.status = :ok
+  self.content_type = 'application/json'
+  self.response_body = ChunkedStream.new(io)
+end
+</code></pre>
+
+<h3>Bonus Stage: On The Fly Compression for Chunked Encoding</h3>
+
+<p>Somewhere during the research, I came across <a href="http://robots.thoughtbot.com/content-compression-with-rack-deflater">Rack::Deflater</a>. This is a middleware that checks for <code>Accept-Encoding</code> in request headers, and compresses your response on the fly!</p>
+
+<p>The trick to get it working with <code>Rack::Chunked</code> is to insert this middleware right after <code>Rack::Chunked</code>. This is because we need to compress each data chunk, instead of the entire request.</p>
+
+<p>To enable compression, all you need to do is add the following line in your <code>config/application.rb</code>:</p>
+
+<pre><code class="ruby">config.middleware.insert_after(Rack::Chunked, Rack::Deflater)
+</code></pre>
+
+<h2>Caveats</h2>
+
+<p>Although the speed has been significantly improved. There are still some caveats to watch for.</p>
+
+<h3>ogr2ogr Sub-Process Error Handling</h3>
+
+<p>Currently the code assumes <code>ogr2ogr</code> sub-process can run successfully all the time, and we all know this is unrealistic. A better error handling process is needed to make it more solid.</p>
+
+<h3>Under Large Load</h3>
+
+<p>Under high load, many <code>ogr2ogr</code> sub-processes will be created. The behavior under this situation is unknown. But this is an internal API with very light traffic. Thus this is not a concern for me (yet). I think some kind of in-process worker pool and monitor could mostly solve this issue, but I have no plan to implement this for now.</p>
+
+<h2>Go Try It Out!</h2>
+
+<p>Here is a <a href="https://gist.github.com/aq1018/e3512f763d42ad8cf80b">gist</a> for you to try it out. Let me know your results / opinions / rants! All is welcome!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[dm-is-slug 0.10.2 Now on GemCutter]]></title>
+    <link href="http://aq1018.github.io/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter/"/>
+    <updated>2010-02-08T22:05:00-08:00</updated>
+    <id>http://aq1018.github.io/blog/2010/02/08/dm-is-slug-is-now-on-gem-cutter</id>
+    <content type="html"><![CDATA[<p>I created a <a href="http://datamapper.org">datamapper</a> plugin called
+<a href="http://github.com/aq1018/dm-is-slug">dm-is-slug</a> in 2009 to
+ease the pain of handling permalinks or url slugs in my
+<a href="http://www.merbivore.com%20project">merb</a>.</p>
+
+<p>So, I spent some time merging commits from <a href="http://github.com/cheba">Alex Mankuta</a>
+whom has fixed many bugs, and now it works much better. Thanks, cheba!</p>
+
+<p>I also added support for <a href="http://rubyforge.org/projects/unidecode/">unidecoding</a>,
+which allows you to turn strings like <em>&ldquo;你好&rdquo;</em> into <em>&ldquo;ni-hao&rdquo;</em>.</p>
+
+<p>Lastly, the gem is pushed to <a href="http://gemcutter.org">gemcutter</a>
+for easy gem install. That didn&rsquo;t take too long! :)</p>
+
+<p><strong><a href="http://github.com/aq1018/dm-is-slug">Find out how to use dm-is-slug on github!</a></strong></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Redcloth Ate My notextile Tag]]></title>
+    <link href="http://aq1018.github.io/blog/2009/04/07/redcloth-ate-my-notextile/"/>
+    <updated>2009-04-07T00:43:00-07:00</updated>
+    <id>http://aq1018.github.io/blog/2009/04/07/redcloth-ate-my-notextile</id>
+    <content type="html"><![CDATA[<p>While playing with textile and UltraViolet in Webby,
+I found textile is re-rendering my UltraViolet generated HTML contents
+disregarding \&lt;notextile> tags.The problem is with UltraVilet versions
+4.1.1 to 4.1.9 has ignored this tag somehow.There is even a
+<a href="http://jgarber.lighthouseapp.com/projects/13054/tickets/119-notextile-blocks-included-in-following-paragrap">bug ticket</a> about it.</p>
+
+<p>The solution?</p>
+
+<p>{%codeblock console %}
+sudo gem uninstall RedCloth -a
+sudo gem install RedCloth -v=4.1.0
+{%endcodeblock%}</p>
+
+<p>This installs RedCloth version 4.1.0 which doesn&rsquo;t eat
+your <code>&lt;notextile&gt;</code> tags and behave correctly for me.
+Next I just did a <code>webby rebuild</code> and everything worked out for me!</p>
+
+<p>Cheers!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Adding Blog Tags to Webby]]></title>
+    <link href="http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby/"/>
+    <updated>2009-04-06T19:12:00-07:00</updated>
+    <id>http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby</id>
+    <content type="html"><![CDATA[<p>The blog now looks better and better, but it is still missing a key feature &ndash; tags.</p>
+
+<p>Let&rsquo;s bust it out! Here is my plan:</p>
+
+<ul>
+<li>Adding a tags attribute under each blog&rsquo;s meta data</li>
+<li>Make a helper that reads each blog and count the occurance of each tag</li>
+<li>Make a partial that links to each tags</li>
+<li>Make a rake task that auto generates tags folder</li>
+</ul>
+
+
+<h2>Adding a tags attribute under each blog&rsquo;s meta data</h2>
+
+<p> This is easy, just open up a post and add a <code>tags</code> attribute to the meta data:</p>
+
+<p>{% codeblock example post.txt lang:yaml %}
+title         :   Adding Blog Tags using Webby
+created_at    :   2009-04-06 19:12:00.343030 +08:00
+blog_post     :   true
+filter:
+  - erb
+  - textile</p>
+
+<h1>Add some tags for this post</h1>
+
+<p>tags:
+  - ruby
+  - webby
+{% endcodeblock %}</p>
+
+<h2>Make tags helper</h2>
+
+<p>All I need to do is to make a tags helper module that does the counting for me,
+and register it with Webby. Here is the code:</p>
+
+<p>{% codeblock lib/tags_helper.rb %}
+module TagsHelper</p>
+
+<p>  # find all blog posts
+  def posts(limit=:all, find_options=nil)
+    options = { :in_directory => &lsquo;articles&rsquo;,
+                :recursive => true,
+                :blog_post => true,
+                :sort_by => &ldquo;created_at&rdquo;,
+                :reverse => true}
+    options.merge!(find_options) if find_options
+    ::Webby::Resources.pages.find(limit, options)
+  end</p>
+
+<p>  def tags_hash
+    return @tags_hash if @tags_hash
+    @tags_hash = {}
+    posts.each do |post|
+      post.tags.each do |tag|
+        @tags_hash[tag] ||=0
+        @tags_hash[tag] += 1
+      end if post.tags
+end
+    @tags_hash
+  end</p>
+
+<p>  def posts_with_tag(tag, limit=:all, find_options=nil)
+    posts(limit, find_options) do |post|
+      post.tags &amp;&amp; post.tags.include?(tag)
+    end
+  end
+end</p>
+
+<p>Webby::Helpers.register(TagsHelper)
+{% endcodeblock %}</p>
+
+<p><code>posts</code> is a handy little short cut for getting all blog posts,
+much shorter to type. You can also pass in the <code>limit</code>,
+and <code>find_options</code> to customize your find. Example:</p>
+
+<p>{% codeblock finding first 10 posts in blogs dir, and sorted in descending chronological order. lang:ruby %}
+posts 10,
+      :in_directory => &lsquo;blogs&rsquo;,
+      :sort_by      => &lsquo;created_at&rsquo;,
+      :reverse      => true
+{% endcodeblock %}</p>
+
+<p><code>tags_hash</code> returns a hash with tag name and occurance as the key and value.</p>
+
+<p><code>posts_with_tag</code> finds all the blog posts related to a tag.</p>
+
+<h2>Make a partial</h2>
+
+<p>Now that we have the helper, we can make a partial that displays the tags. I made it in HAML:</p>
+
+<p>{% codeblock <em>partials/</em>tags.haml %}
+%ul
+  / sort tags in alphabetical order,
+  / and then generate links for each tag
+  -tags_hash.keys.sort.each do |tag|
+    %li
+      %a{:href=>&ldquo;/tags/#{tag}&rdquo;}= tag
+      ==(#{tags_hash[tag]})
+{% endcodeblock %}</p>
+
+<p>You can see the partial in effect on the lower right side of the page in footer.
+This is basic and nothing fancy&hellip;</p>
+
+<h2>Make a Rake Task</h2>
+
+<p>Now the tags are in place, we want actually display the tags pages.
+We make a new rake task to generate all the tags page for us.</p>
+
+<p>{% codeblock tags.rake lang:ruby %}
+require &lsquo;lib/tags.rb&rsquo;
+include TagsHelper
+namespace :tags do
+  desc &ldquo;auto generate all tags page&rdquo;
+  task :generate do
+    ::Webby.load_files
+    tags_hash.keys.each do |tag|
+      dir = Webby.site.tags_dir
+      page = File.join(dir, File.basename(tag))
+      page =
+        Webby::Builder.create(
+          page,
+          :from => &ldquo;#{Webby.site.template_dir}/tags/generate.erb&rdquo;,
+          :locals => {:tag => tag, :directory => dir}
+        )
+    end
+  end</p>
+
+<p>  desc &ldquo;remove all tags page&rdquo;
+  task :remove do
+    rm_r Webby.site.content_dir + &ldquo;/&rdquo; + Webby.site.tags_dir
+  end</p>
+
+<p>  desc &ldquo;regenerate all tags page&rdquo;
+  task :regenerate => [:remove, :generate]
+end
+{% endcodeblock %}</p>
+
+<p>You will also need the corresponding <code>templates/tags/generate.erb</code>,
+which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github account</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[This Blog is Made using Webby]]></title>
+    <link href="http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby/"/>
+    <updated>2009-04-06T00:51:00-07:00</updated>
+    <id>http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby</id>
+    <content type="html"><![CDATA[<p>After a few days of work, I finally finished the layout for my blog.
+During the construction of this blog, I wanted to use a very light framework.
+Being mainly a Ruby On Rails developer I found a ruby framework called
+<a href="http://webby.rubyforge.org/">Webby</a> that works perfectly with my requirements.</p>
+
+<p>From the Webby describes itself as:</p>
+
+<blockquote><p>Webby is a fantastic little website management system.
+It would be called a content management system if it were a bigger kid.
+But, it’s just a runt with a special knack for transforming text.
+And that’s really all it does – manages the legwork of turning text into something else,
+an ASCII Alchemist if you will."</p></blockquote>
+
+<p>Sounds nice?</p>
+
+<p>It supports ERB, haml, sass, Textile, Markdown and a set of other
+arsenels you can use at your disposal. Another reason I choose Webby
+is because it supports <a href="http://ultraviolet.rubyforge.org/">UltraViolet</a>
+which comes in handy when you need to demonstrate a few lines of code.
+Even though it also supports <a href="http://coderay.rubychan.de/">CodeRay</a>,
+but I much perfer UltraViolet as it supports a lot more
+css hightlighting templates and languages.</p>
+
+<p>Another highlight of Webby is that it uses A CSS framework called
+<a href="http://code.google.com/p/blueprintcss/">BluePrint</a>This little CSS
+framework makes website layout a breeze. Plus it has a powerful
+customization utility that can generate custom sized grid with
+meaningful class names.</p>
+
+<h2>What about commenting?</h2>
+
+<p>As Maxime once commented about my idea of using Webby to generate a static Blog:</p>
+
+<blockquote><p>&ldquo;A blog without comments aint a blog!&rdquo;</p></blockquote>
+
+<p>Sure, you&rsquo;ve got a point! My answer to this problem is <a href="http://disqus.com/">Disqus</a>.
+It provides a JavaScript Widget that handles all the blog comments for you.
+No more custom coding for comments, wrestling with SPAM, etc.
+Just drop in their code, and sit and relax.
+You&rsquo;ve got a powerful commenting system on your blog already! Sweet&hellip;</p>
+
+<h2>Lastly, a Gift if you care</h2>
+
+<p>if the idea of making a blog with Webby sounds nice to you,
+maybe you can give it a try as well!</p>
+
+<p>The source of this blog is <a href="http://github.com/aq1018/aaron-blog">hosted</a>
+on <a href="http://github.com/">GitHub</a>.</p>
+
+<p>Anyways, it was a lot of fun playing around using this little powerful framework,
+and through fun experiments, a blog is actually born! Life is beautiful&hellip;</p>
+]]></content>
+  </entry>
+  
+</feed>

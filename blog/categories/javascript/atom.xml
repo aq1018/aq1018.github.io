@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: javascript | AQ]]></title>
+  <link href="http://aq1018.github.io/blog/categories/javascript/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2015-07-10T02:16:45-07:00</updated>
+  <id>http://aq1018.github.io/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Detecting Backone.View Memory Leaks]]></title>
+    <link href="http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/"/>
+    <updated>2014-05-11T22:09:38-07:00</updated>
+    <id>http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks</id>
+    <content type="html"><![CDATA[<p><strong>Edit</strong>: I have packaged it into
+<a href="https://github.com/aq1018/Backbone.LeakChecker">backbone.leakchecker</a>. Happy leak hunting!</p>
+
+<p>Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your views
+by calling <code>view.remove()</code>? Are you sure didn&rsquo;t even miss one of them?</p>
+
+<p>No worries, I&rsquo;ve got your back. : )</p>
+
+<p>Just include <code>leaky-registry.js</code> before you load and initialize your Backbone app. It
+will monitor the life cycle of every <code>Backbone.View</code> and report any possible
+leaky views periodically to your browser console screen.</p>
+
+<p>{% gist bca960d6124a76db63d0 leaky-registry.js %}</p>
+
+<p>Look Ma, No leaks!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Inspec - Yet Another Javascript BDD Test Framework]]></title>
+    <link href="http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework/"/>
+    <updated>2009-04-13T21:14:00-07:00</updated>
+    <id>http://aq1018.github.io/blog/2009/04/13/inspec-yet-another-javascript-bdd-test-framework</id>
+    <content type="html"><![CDATA[<p><em>Update: Due to lack of interest and time, Inspec is no longer maintained.
+<a href="http://visionmedia.github.com/jspec/">jSpec</a> has become more complete since this post,
+and I would recommend using <a href="http://visionmedia.github.com/jspec/">jSpec</a> instead.</em></p>
+
+<h3>The &ldquo;Why&rdquo; Question</h3>
+
+<p>Why? You ask, we already have BDD Frameworks such as<a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a>,
+<a href="http://visionmedia.github.com/jspec/">jSpec</a>, and <a href="http://jania.pe.kr/aw/moin.cgi/JSSpec">JSSepc</a>, you want to make <em>another</em> Javascript BDD Test Framework?</p>
+
+<p>To answer your question, you can take a look at my previous article
+So, please <a href="/blog/2009/04/12/javascript-bdd-test-frameworks-compared">read it</a> if you haven&rsquo;t done so.</p>
+
+<p>Now, if you are still with me after finish reading my article,
+allow me to introduce you a new BDD Test Framework that doesn&rsquo;t suck.</p>
+
+<h2>Introducing <a href="http://github.com/aq1018/inspec">Inspec</a></h2>
+
+<p>While coding up <a href="http://github.com/aq1018/inspec">Inspec</a>, I was trying to fulfill the following features:</p>
+
+<ul>
+<li>Nested behaviors.</li>
+<li>Shared behaviors. (aka. <code>it_should_behave_like</code> in <a href="http://rsepc.info">RSepc</a>)</li>
+<li>Framework agnostic. ( You can use it with <a href="http://jquery.com/">jQuery</a>,
+<a href="http://www.prototypejs.org/">Prototype</a>, <a href="http://mootools.net/">Mootools</a>, <a href="http://developer.yahoo.com/yui/">YUI</a>,
+or <a href="http://extjs.com/">ExtJS</a>. it&rsquo;s your choice. )</li>
+<li>An elegent DSL.</li>
+<li>No namespace pollution.</li>
+<li>Able to run in browser, <a href="http://ajaxian.com/archives/johnson-wrapping-javascript-in-a-loving-ruby-embrace-and-arax">command-line</a>, and <a href="http://en.wikipedia.org/wiki/Server-side_JavaScript">server side</a></li>
+<li>A cystal clear API that is easy to understand and extend</li>
+</ul>
+
+
+<p>Sound awesome! But how does it work?</p>
+
+<p>Here is a small example:</p>
+
+<p>{%codeblock some examples on how to use Inspe. lang:js%}
+describe(&ldquo;Inspec&rdquo;, function(){</p>
+
+<p>  it(&ldquo;should work&rdquo;, function(){
+    expect(true).toBeTrue();
+  })</p>
+
+<p>  it(&ldquo;should fail&rdquo;, function(){
+    expect(true).not().toBeTrue();
+  })</p>
+
+<p>  it(&ldquo;should be pending&rdquo;)</p>
+
+<p>  describe(&ldquo;with a nested example group&rdquo;, function(){  <br/>
+    it(&ldquo;should work as a nested example group&rdquo;, function(){
+      expect(false).toBe(false);
+    })
+  })</p>
+
+<p>  // W00t?? It&rsquo;s nesting a shared example group
+  itShouldBehaveLike(&ldquo;a shared example group&rdquo;);
+})</p>
+
+<p>sharedExamplesFor(&ldquo;a shared example group&rdquo;, function(){
+  it(&ldquo;should work as shared example&rdquo;, function(){
+    expect(true).toBeTrue();
+  })</p>
+
+<p>  // Yes! Shared nested Example Groups!
+  describe(&ldquo;with nested example groups in shared&rdquo;, function(){
+    it(&ldquo;should work as a nested example group in shared&rdquo;, function(){
+      expect(true).toBeTrue();
+    })
+  })
+})
+{%endcodeblock%}</p>
+
+<p>Here is another example that uses more matchers:</p>
+
+<p>{%codeblock example matchers. lang:js%}
+describe(&ldquo;Matchers&rdquo;, function(){
+  describe(&ldquo;TypeMatcher&rdquo;, function(){
+    it(&ldquo;should work with String&rdquo;, function(){
+      var aString = &ldquo;abc&rdquo;;
+      expect(aString).toBeType(&ldquo;string&rdquo;);
+    })</p>
+
+<pre><code>it("should work with Number", function(){
+  var aNumber = 123;
+  expect(aNumber).toBeType("number");
+})
+
+it("should work with Object", function(){
+  var anObject = {};
+  expect(anObject).toBeType("object");
+})
+
+it("should work with Boolean", function(){
+  var aBoolean = false;
+  expect(aBoolean).toBeType("boolean");
+})
+
+it("should work with undefined", function(){
+  var undefinedValue;
+  expect(undefinedValue).toBeType("undefined");
+})
+
+it("should work with function", function(){
+  var aFunction = function(){};
+  expect(aFunction).toBeType("function");
+})
+</code></pre>
+
+<p>  })</p>
+
+<p>  describe(&ldquo;InstanceMatcher&rdquo;, function(){
+    it(&ldquo;should work with String&rdquo;, function(){
+      var aString = new String(&ldquo;abc&rdquo;);
+      expect(aString).toBeA(String);
+    })</p>
+
+<pre><code>it("should work with Number", function(){
+  var aNumber = new Number(123);
+  expect(aNumber).toBeA(Number);
+})
+
+it("should work with a class", function(){
+  var Foo = function(){};
+  var foo = new Foo();
+  expect(foo).toBeA(Foo);
+})
+
+it("should work with a sub-class", function(){
+  var Foo = Inspec.Class.extend({});
+  var foo = new Foo();
+  expect(foo).toBeA(Foo);
+  expect(foo).toBeA(Inspec.Class);
+  expect(foo).toBeA(Object);
+})
+</code></pre>
+
+<p>  })</p>
+
+<p>  describe(&ldquo;ComparisonMatcher&rdquo;, function(){
+    it(&ldquo;should work with toBeAtLeast&rdquo;, function(){
+      expect(5).toBeAtLeast(5);
+      expect(6).toBeAtLeast(5);
+    })</p>
+
+<pre><code>it("should work with toBeAtMost", function(){
+  expect(4).toBeAtMost(5);
+  expect(5).toBeAtMost(5);
+})
+
+it("should work with toBeGreaterThan", function(){
+  expect(6).toBeGreaterThan(5);
+  expect(5).not().toBeGreaterThan(5);
+})
+
+it("should work with toBeLessThan", function(){
+  expect(4).toBeLessThan(5);
+  expect(5).not().toBeLessThan(5);
+})
+</code></pre>
+
+<p>  })</p>
+
+<p>  describe(&ldquo;RegexMatcher&rdquo;, function(){
+    it(&ldquo;should match correct string&rdquo;, function(){
+      var emailRegex = /^(<a href="[-.\w]*[0-9a-zA-Z]">0-9a-zA-Z</a><em>@([0-9a-zA-Z][-\w]</em>[0-9a-zA-Z].)+[a-zA-Z]{2,9})$/;
+      var email = &ldquo;<a href="&#109;&#x61;&#105;&#x6c;&#116;&#111;&#58;&#97;&#x62;&#99;&#64;&#x65;&#x66;&#x67;&#x2e;&#x63;&#111;&#x6d;">&#x61;&#98;&#99;&#x40;&#x65;&#x66;&#x67;&#46;&#x63;&#111;&#x6d;</a>&rdquo;;
+      expect(email).toMatch(emailRegex);
+    })</p>
+
+<pre><code>it("should not match incorrect string", function(){
+  var emailRegex = /^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/;
+  var email = "abc_efg.com";
+  expect(email).not().toMatch(emailRegex);
+})
+</code></pre>
+
+<p>  })
+})
+{%endcodeblock%}</p>
+
+<h2>What&rsquo;s working so far</h2>
+
+<p>As this is still an early release
+(Let&rsquo;s see, It is about 3 weeks old so far.
+Let&rsquo;s call it version 0.0.1??),
+most of the core features are already working.
+Here is the list:</p>
+
+<ul>
+<li>Basic Matchers</li>
+<li>Nested describes</li>
+<li>Shared describes</li>
+<li>Sandboxed Example Scope</li>
+<li>Tested to work in FireFox</li>
+<li>Basic HTML Reporter</li>
+<li>Works with &ldquo;Rhino&rdquo;:rhino and &ldquo;Johnson&rdquo;:johnson</li>
+<li>Basic Console Reporter for &ldquo;Rhino&rdquo;:rhino and &ldquo;Johnson&rdquo;:johnson</li>
+</ul>
+
+
+<h2>In The Near Future</h2>
+
+<p>While <a href="http://github.com/aq1018/inspec">Inspec</a> is now working with basic matchers,
+here are a few things I&rsquo;d like to add:</p>
+
+<ul>
+<li>Better syntax and organization of matchers for easier extensions.
+(Tempted to steal from <a href="http://github.com/nkallen/screw-unit/tree/master">Screw.Unit</a>)</li>
+<li>More Matchers. (Makes everyone happy.)</li>
+<li>Work on WScript environment.</li>
+<li>Make sure compatibility with all major browsers. (Helps appricated)</li>
+<li>Allow selective execution of Example groups / Examples.</li>
+<li>Make a better HTML Reporter, that hooks into selective executions.</li>
+<li>Better Documentations. (Helps appricated)</li>
+<li>Better Error messages on Failure and Exception.</li>
+<li>Package and maybe minify(why not?).</li>
+<li>A LOT more rigid and concrete tests to reach 100% coverage.
+(Also serve as uage examples, helps appricated)</li>
+</ul>
+
+
+<h2>For Developers</h2>
+
+<p>I have been very busy with my date job lately,
+and never have enough time to work on my own projects.
+Any help is very much appricated. So if you are interested in developing <a href="http://github.com/aq1018/inspec">Inspec</a>
+together, just <a href="http://github.com/aq1018/inspec">fork me</a>,make some improvements, rebase, push,
+and shoot me a pull request. If you are a regular contributor,
+your name will be in the co-author&rsquo;s list as well.</p>
+
+<h2>Suggestions? Comments?</h2>
+
+<p>While I primarily developed this for my own need.
+I hope this will benefit everyone who has similiar needs.
+So your suggestions and critics are very welcome.
+Tell me what you like about it, what you don&rsquo;t like about it,
+and how <a href="http://github.com/aq1018/inspec">Inspec</a> can be improved. Sorry that there is nothing
+like google group or irc or mailing list setup yet. You can leave a
+comment here, and I will be notified automatically through email.
+If this project grows bigger, I will setup a google group and an irc channel.
+But for now, you can either leave a comment, or scroll down to the bottom
+of the page, and my contact information is on the lower right.</p>
+]]></content>
+  </entry>
+  
+</feed>

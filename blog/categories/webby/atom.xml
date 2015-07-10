@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: webby | AQ]]></title>
+  <link href="http://aq1018.github.io/blog/categories/webby/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2015-07-10T02:16:45-07:00</updated>
+  <id>http://aq1018.github.io/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Adding Blog Tags to Webby]]></title>
+    <link href="http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby/"/>
+    <updated>2009-04-06T19:12:00-07:00</updated>
+    <id>http://aq1018.github.io/blog/2009/04/06/adding-blog-tags-using-webby</id>
+    <content type="html"><![CDATA[<p>The blog now looks better and better, but it is still missing a key feature &ndash; tags.</p>
+
+<p>Let&rsquo;s bust it out! Here is my plan:</p>
+
+<ul>
+<li>Adding a tags attribute under each blog&rsquo;s meta data</li>
+<li>Make a helper that reads each blog and count the occurance of each tag</li>
+<li>Make a partial that links to each tags</li>
+<li>Make a rake task that auto generates tags folder</li>
+</ul>
+
+
+<h2>Adding a tags attribute under each blog&rsquo;s meta data</h2>
+
+<p> This is easy, just open up a post and add a <code>tags</code> attribute to the meta data:</p>
+
+<p>{% codeblock example post.txt lang:yaml %}
+title         :   Adding Blog Tags using Webby
+created_at    :   2009-04-06 19:12:00.343030 +08:00
+blog_post     :   true
+filter:
+  - erb
+  - textile</p>
+
+<h1>Add some tags for this post</h1>
+
+<p>tags:
+  - ruby
+  - webby
+{% endcodeblock %}</p>
+
+<h2>Make tags helper</h2>
+
+<p>All I need to do is to make a tags helper module that does the counting for me,
+and register it with Webby. Here is the code:</p>
+
+<p>{% codeblock lib/tags_helper.rb %}
+module TagsHelper</p>
+
+<p>  # find all blog posts
+  def posts(limit=:all, find_options=nil)
+    options = { :in_directory => &lsquo;articles&rsquo;,
+                :recursive => true,
+                :blog_post => true,
+                :sort_by => &ldquo;created_at&rdquo;,
+                :reverse => true}
+    options.merge!(find_options) if find_options
+    ::Webby::Resources.pages.find(limit, options)
+  end</p>
+
+<p>  def tags_hash
+    return @tags_hash if @tags_hash
+    @tags_hash = {}
+    posts.each do |post|
+      post.tags.each do |tag|
+        @tags_hash[tag] ||=0
+        @tags_hash[tag] += 1
+      end if post.tags
+end
+    @tags_hash
+  end</p>
+
+<p>  def posts_with_tag(tag, limit=:all, find_options=nil)
+    posts(limit, find_options) do |post|
+      post.tags &amp;&amp; post.tags.include?(tag)
+    end
+  end
+end</p>
+
+<p>Webby::Helpers.register(TagsHelper)
+{% endcodeblock %}</p>
+
+<p><code>posts</code> is a handy little short cut for getting all blog posts,
+much shorter to type. You can also pass in the <code>limit</code>,
+and <code>find_options</code> to customize your find. Example:</p>
+
+<p>{% codeblock finding first 10 posts in blogs dir, and sorted in descending chronological order. lang:ruby %}
+posts 10,
+      :in_directory => &lsquo;blogs&rsquo;,
+      :sort_by      => &lsquo;created_at&rsquo;,
+      :reverse      => true
+{% endcodeblock %}</p>
+
+<p><code>tags_hash</code> returns a hash with tag name and occurance as the key and value.</p>
+
+<p><code>posts_with_tag</code> finds all the blog posts related to a tag.</p>
+
+<h2>Make a partial</h2>
+
+<p>Now that we have the helper, we can make a partial that displays the tags. I made it in HAML:</p>
+
+<p>{% codeblock <em>partials/</em>tags.haml %}
+%ul
+  / sort tags in alphabetical order,
+  / and then generate links for each tag
+  -tags_hash.keys.sort.each do |tag|
+    %li
+      %a{:href=>&ldquo;/tags/#{tag}&rdquo;}= tag
+      ==(#{tags_hash[tag]})
+{% endcodeblock %}</p>
+
+<p>You can see the partial in effect on the lower right side of the page in footer.
+This is basic and nothing fancy&hellip;</p>
+
+<h2>Make a Rake Task</h2>
+
+<p>Now the tags are in place, we want actually display the tags pages.
+We make a new rake task to generate all the tags page for us.</p>
+
+<p>{% codeblock tags.rake lang:ruby %}
+require &lsquo;lib/tags.rb&rsquo;
+include TagsHelper
+namespace :tags do
+  desc &ldquo;auto generate all tags page&rdquo;
+  task :generate do
+    ::Webby.load_files
+    tags_hash.keys.each do |tag|
+      dir = Webby.site.tags_dir
+      page = File.join(dir, File.basename(tag))
+      page =
+        Webby::Builder.create(
+          page,
+          :from => &ldquo;#{Webby.site.template_dir}/tags/generate.erb&rdquo;,
+          :locals => {:tag => tag, :directory => dir}
+        )
+    end
+  end</p>
+
+<p>  desc &ldquo;remove all tags page&rdquo;
+  task :remove do
+    rm_r Webby.site.content_dir + &ldquo;/&rdquo; + Webby.site.tags_dir
+  end</p>
+
+<p>  desc &ldquo;regenerate all tags page&rdquo;
+  task :regenerate => [:remove, :generate]
+end
+{% endcodeblock %}</p>
+
+<p>You will also need the corresponding <code>templates/tags/generate.erb</code>,
+which you can find in <a href="http://github.com/aq1018/aaron-blog/">my github account</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[This Blog is Made using Webby]]></title>
+    <link href="http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby/"/>
+    <updated>2009-04-06T00:51:00-07:00</updated>
+    <id>http://aq1018.github.io/blog/2009/04/06/this-blog-is-made-using-webby</id>
+    <content type="html"><![CDATA[<p>After a few days of work, I finally finished the layout for my blog.
+During the construction of this blog, I wanted to use a very light framework.
+Being mainly a Ruby On Rails developer I found a ruby framework called
+<a href="http://webby.rubyforge.org/">Webby</a> that works perfectly with my requirements.</p>
+
+<p>From the Webby describes itself as:</p>
+
+<blockquote><p>Webby is a fantastic little website management system.
+It would be called a content management system if it were a bigger kid.
+But, it’s just a runt with a special knack for transforming text.
+And that’s really all it does – manages the legwork of turning text into something else,
+an ASCII Alchemist if you will."</p></blockquote>
+
+<p>Sounds nice?</p>
+
+<p>It supports ERB, haml, sass, Textile, Markdown and a set of other
+arsenels you can use at your disposal. Another reason I choose Webby
+is because it supports <a href="http://ultraviolet.rubyforge.org/">UltraViolet</a>
+which comes in handy when you need to demonstrate a few lines of code.
+Even though it also supports <a href="http://coderay.rubychan.de/">CodeRay</a>,
+but I much perfer UltraViolet as it supports a lot more
+css hightlighting templates and languages.</p>
+
+<p>Another highlight of Webby is that it uses A CSS framework called
+<a href="http://code.google.com/p/blueprintcss/">BluePrint</a>This little CSS
+framework makes website layout a breeze. Plus it has a powerful
+customization utility that can generate custom sized grid with
+meaningful class names.</p>
+
+<h2>What about commenting?</h2>
+
+<p>As Maxime once commented about my idea of using Webby to generate a static Blog:</p>
+
+<blockquote><p>&ldquo;A blog without comments aint a blog!&rdquo;</p></blockquote>
+
+<p>Sure, you&rsquo;ve got a point! My answer to this problem is <a href="http://disqus.com/">Disqus</a>.
+It provides a JavaScript Widget that handles all the blog comments for you.
+No more custom coding for comments, wrestling with SPAM, etc.
+Just drop in their code, and sit and relax.
+You&rsquo;ve got a powerful commenting system on your blog already! Sweet&hellip;</p>
+
+<h2>Lastly, a Gift if you care</h2>
+
+<p>if the idea of making a blog with Webby sounds nice to you,
+maybe you can give it a try as well!</p>
+
+<p>The source of this blog is <a href="http://github.com/aq1018/aaron-blog">hosted</a>
+on <a href="http://github.com/">GitHub</a>.</p>
+
+<p>Anyways, it was a lot of fun playing around using this little powerful framework,
+and through fun experiments, a blog is actually born! Life is beautiful&hellip;</p>
+]]></content>
+  </entry>
+  
+</feed>

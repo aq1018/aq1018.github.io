@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: backbone | AQ]]></title>
+  <link href="http://aq1018.github.io/blog/categories/backbone/atom.xml" rel="self"/>
+  <link href="http://aq1018.github.io/"/>
+  <updated>2015-07-10T02:16:45-07:00</updated>
+  <id>http://aq1018.github.io/</id>
+  <author>
+    <name><![CDATA[Aaron Qian]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Detecting Backone.View Memory Leaks]]></title>
+    <link href="http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks/"/>
+    <updated>2014-05-11T22:09:38-07:00</updated>
+    <id>http://aq1018.github.io/blog/2014/05/11/detecting-backone-dot-view-memory-leaks</id>
+    <content type="html"><![CDATA[<p><strong>Edit</strong>: I have packaged it into
+<a href="https://github.com/aq1018/Backbone.LeakChecker">backbone.leakchecker</a>. Happy leak hunting!</p>
+
+<p>Do you think you write good Backbone.js code? Are you sure your view is not
+leaking memory? Are you confident that you properly disposed all your views
+by calling <code>view.remove()</code>? Are you sure didn&rsquo;t even miss one of them?</p>
+
+<p>No worries, I&rsquo;ve got your back. : )</p>
+
+<p>Just include <code>leaky-registry.js</code> before you load and initialize your Backbone app. It
+will monitor the life cycle of every <code>Backbone.View</code> and report any possible
+leaky views periodically to your browser console screen.</p>
+
+<p>{% gist bca960d6124a76db63d0 leaky-registry.js %}</p>
+
+<p>Look Ma, No leaks!</p>
+]]></content>
+  </entry>
+  
+</feed>
