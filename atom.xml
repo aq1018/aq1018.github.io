@@ -4,7 +4,7 @@
   <title><![CDATA[AQ]]></title>
   <link href="http://aq1018.github.io/atom.xml" rel="self"/>
   <link href="http://aq1018.github.io/"/>
-  <updated>2015-07-10T02:16:45-07:00</updated>
+  <updated>2015-07-10T02:21:09-07:00</updated>
   <id>http://aq1018.github.io/</id>
   <author>
     <name><![CDATA[Aaron Qian]]></name>
@@ -12,15 +12,6 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  
-  <entry>
-    <title type="html"><![CDATA[Learning Golang]]></title>
-    <link href="http://aq1018.github.io/blog/2015/07/10/learning-golang/"/>
-    <updated>2015-07-10T02:09:15-07:00</updated>
-    <id>http://aq1018.github.io/blog/2015/07/10/learning-golang</id>
-    <content type="html"><![CDATA[<p>Test Test&hellip;</p>
-]]></content>
-  </entry>
   
   <entry>
     <title type="html"><![CDATA[Streaming GeoJSON With GDAL, Rack::Chunked, and Rails Live Streaming]]></title>
